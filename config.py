@@ -1,8 +1,11 @@
 # Application Global Variables
 # This module serves as a way to share variables across different
 # modules (global variables).
-
 import os
+
+with open(os.path.join(os.path.dirname(__file__), ".overridepath")) as f:
+    OVERRIDE_PATH = f.readline().strip()
+    STEPBASEPATH = f.readline().strip()
 
 # Flag that indicates to run in Debug mode or not. When running in Debug mode
 # more information is written to the Text Command window. Generally, it's useful
@@ -16,6 +19,5 @@ DEBUG = True
 # part of the ID to better ensure the ID is unique.
 ADDIN_NAME = os.path.basename(os.path.dirname(__file__))
 COMPANY_NAME = "ACME"
-STEPBASEPATH = "/Users/zachsharma/Documents/old/nest2dapi/imported/"
 # Palettes
 sample_palette_id = f"{COMPANY_NAME}_{ADDIN_NAME}_palette_id"

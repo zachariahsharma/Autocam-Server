@@ -1,0 +1,4 @@
+temp/
+.overridepath
+.env
+__pycache__/

@@ -7,7 +7,7 @@ import sys
 from ..commands.Orientation import orient_plate_pocket_side_up
 import time
 
-sys.path.append("/Users/zachsharma/miniconda3/lib/python3.12/site-packages")
+sys.path.append(OVERRIDE_PATH)
 import numpy as np
 import requests
 

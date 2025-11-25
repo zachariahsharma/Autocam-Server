@@ -1,11 +1,10 @@
 import adsk.core, adsk.fusion, adsk.cam, traceback
 
 import os
-from ..commands.SetupGenerator import SetupGenerator
 from ..commands.MultiImport import importFiles
 from ..commands.NewNCProgram import export
 from ..commands.DeleteToolpaths import DeleteToolpaths
-from ..commands.AutoArrange import AutoArrange
+from ..commands.HandleTube import handleTube
 from ..config import *
 import sys
 
@@ -25,15 +24,8 @@ def start(context):
             [STEPBASEPATH + child["name"] + ".step" for child in context["parts"]],
             [child["quantity"] for child in context["parts"]],
         )
-        AutoArrange(context["length"], context["width"])
-        SetupGenerator(
-            context["machine"],
-            float(context["trueDepth"]),
-            context["material"],
-            float(context["thickness"]),
-        )
+        handleTube()
         DeleteToolpaths()
-        # raise Exception("Debug Stop")
         export(context["parts"][0]["name"])
         app.activeDocument.saveAs(
             context["parts"][0]["name"],

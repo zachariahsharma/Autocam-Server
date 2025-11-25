@@ -2,9 +2,11 @@ import adsk.core, adsk.fusion, adsk.cam, traceback
 import threading, sys, time
 from .workflows import importPlate as importPlate
 from .workflows import camPlate as camPlate
+from .workflows import camTube as camTube
 import queue, json
+from config import *
 
-sys.path.append("/Users/zachsharma/fusionenv/lib/python3.12/site-packages")
+sys.path.append(OVERRIDE_PATH)
 from flask import Flask, request
 from werkzeug.serving import make_server  # <-- add this
 
@@ -33,6 +35,8 @@ class WebhookHandler(adsk.core.CustomEventHandler):
                 task = (job or {}).get("__task", "importPlate")
                 if task == "autocam":
                     camPlate.start(job)
+                elif task == "boxtube":
+                    camTube.start(job)
                 else:
                     importPlate.start(job)
         except Exception:
@@ -75,6 +79,26 @@ def autocam():
 
     job = json_payload or {}
     job["__task"] = "autocam"
+    _jobs.put(job)
+    fusion_app.fireCustomEvent(CUSTOM_EVENT_ID, json.dumps({"path": request.path}))
+    return "OK", 200
+
+
+@_flask_app.route("/boxtube", methods=["POST"])
+def autocam():
+    fusion_app = adsk.core.Application.get()
+    fusion_app.log("Flask endpoint /boxtube was called")
+    body = request.get_data(cache=True, as_text=True)
+    json_payload = request.get_json(silent=True)
+
+    fusion_app.log(f"Method: {request.method}")
+    fusion_app.log(f"Path: {request.path}")
+    fusion_app.log(f"Headers: {dict(request.headers)}")
+    fusion_app.log(f"Body: {body!r}")
+    fusion_app.log(f"JSON: {type(json_payload)}")
+
+    job = json_payload or {}
+    job["__task"] = "boxtube"
     _jobs.put(job)
     fusion_app.fireCustomEvent(CUSTOM_EVENT_ID, json.dumps({"path": request.path}))
     return "OK", 200
