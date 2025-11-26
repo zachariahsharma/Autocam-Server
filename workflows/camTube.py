@@ -17,7 +17,7 @@ def start(context):
     app = adsk.core.Application.get()
     ui = app.userInterface
     try:
-        app = adsk.core.Application.get()
+        app: adsk.core.Application = adsk.core.Application.get()
         ui: adsk.core.UserInterface = app.userInterface
         doc = app.documents.add(adsk.core.DocumentTypes.FusionDesignDocumentType)
         importFiles(
@@ -30,7 +30,7 @@ def start(context):
         app.log('hello')
         app.activeDocument.saveAs(
             context["parts"][0]["name"],
-            app.data.activeProject.rootFolder.dataFolders.itemByName(
+            app.data.dataProjects.item(1).rootFolder.dataFolders.itemByName(
                 "2025 Robot"
             ).dataFolders.itemByName("AutoCAMDrop"),
             context["parts"][0]["name"],

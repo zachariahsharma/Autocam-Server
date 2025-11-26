@@ -37,7 +37,7 @@ def start(context):
         export(context["parts"][0]["name"])
         app.activeDocument.saveAs(
             context["parts"][0]["name"],
-            app.data.activeProject.rootFolder.dataFolders.itemByName(
+            app.data.dataProjects.item(1).rootFolder.dataFolders.itemByName(
                 "2025 Robot"
             ).dataFolders.itemByName("AutoCAMDrop"),
             context["parts"][0]["name"],
