@@ -110,7 +110,7 @@ def _start_http_server():
     """
     global _http_server
     # Bind to localhost; fixed port
-    _http_server = make_server("127.0.0.1", 51234, _flask_app)
+    _http_server = make_server("0.0.0.0", 51234, _flask_app)
 
     # (Optional) push an app context if your routes use `current_app`, etc.
     # ctx = _flask_app.app_context()
