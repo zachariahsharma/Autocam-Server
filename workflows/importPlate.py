@@ -75,7 +75,7 @@ def start(context):
                 )
             data = {"json": json.dumps(excess)}
             x = requests.post(
-                "http://127.0.0.1:5000/mt/webhook/not_fit",
+                "http://192.168.1.83:5000/mt/webhook/not_fit",
                 # headers=headers,
                 data=data,
                 files=files_payload,

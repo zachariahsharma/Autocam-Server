@@ -142,7 +142,7 @@ def run(context):
             _flask_thread.start()
 
         time.sleep(0.4)  # let the server spin up
-        ui.messageBox("Flask is running on http://127.0.0.1:51234")
+        ui.messageBox("Flask is running on http://192.168.1.83:51234")
 
     except:
         if ui:
