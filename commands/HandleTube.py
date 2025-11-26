@@ -104,7 +104,7 @@ def handleTube():
     cam = adsk.cam.CAM.cast(products.itemByProductType("CAMProductType"))
 
     # Select the box tube component
-    body = adsk.fusion.BRepBody.cast(selection.entity)
+    body = adsk.fusion.BRepBody.cast(selection.bRepBodies.item(0))
     # Identify the four side faces
     side_faces = []
     two_faces = []

@@ -12,7 +12,7 @@ def orient_plate_pocket_side_up(occurrence: adsk.fusion.Occurrence):
             except:
                 continue
     transform = occurrence.transform2
-    app.log("transform: " + str(transform))
+    # app.log("transform: " + str(transform))
     n_world = normal.copy()
     n_world.transformBy(occurrence.transform2)
     n_world.normalize()

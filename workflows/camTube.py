@@ -27,6 +27,7 @@ def start(context):
         handleTube()
         DeleteToolpaths()
         export(context["parts"][0]["name"])
+        app.log('hello')
         app.activeDocument.saveAs(
             context["parts"][0]["name"],
             app.data.activeProject.rootFolder.dataFolders.itemByName(

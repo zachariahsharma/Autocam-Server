@@ -73,3 +73,4 @@ def DeleteToolpaths():
             if "empty" in str(toolpath.warning).lower():
                 toolpath.deleteMe()
         cam.generateAllToolpaths(True)
+        waitForGeneration(setup, waitforcontour=True)

@@ -4,7 +4,7 @@ from .workflows import importPlate as importPlate
 from .workflows import camPlate as camPlate
 from .workflows import camTube as camTube
 import queue, json
-from config import *
+from .config import *
 
 sys.path.append(OVERRIDE_PATH)
 from flask import Flask, request
@@ -85,7 +85,7 @@ def autocam():
 
 
 @_flask_app.route("/boxtube", methods=["POST"])
-def autocam():
+def boxtube():
     fusion_app = adsk.core.Application.get()
     fusion_app.log("Flask endpoint /boxtube was called")
     body = request.get_data(cache=True, as_text=True)

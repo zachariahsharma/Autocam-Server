@@ -8,6 +8,7 @@ from ..commands.Orientation import orient_plate_pocket_side_up
 import time
 
 sys.path.append(OVERRIDE_PATH)
+import json
 import numpy as np
 import requests
 
@@ -30,20 +31,17 @@ def start(context):
             comp: adsk.fusion.Component = app.activeProduct.rootComponent
             for occ in comp.allOccurrences:
                 res = orient_plate_pocket_side_up(occ)
-                app.log(f"Oriented {occ.name}: {res}")
-            AutoArrange(plate["Length"], plate["Width"])
+                # app.log(f"Orientned {occ.name}: {res}")
+            arrange = AutoArrange(plate["Length"], plate["Width"])
             occurances = []
-            for occ in comp.allOccurrences:
-                if (
-                    "Arrange" in occ.fullPathName
-                    and "Envelope" in occ.fullPathName
-                    and len(occ.fullPathName) > 35
-                    and "Envelope1" not in occ.fullPathName
-                ):
-                    occurances.append(occ.bRepBodies.item(0).parentComponent.name)
-            occurances = [str(x) for x in occurances]
-            for occurance in occurances:
-                excess.append(occurance)
+            for envelope in arrange.resultEnvelopes:
+                app.log(f"Arranging envelope {envelope.name}")
+                if "Envelope1" not in envelope.name:
+                    for occ in envelope.occurrences:
+                        occurances.append(
+                            occ.occurrence.bRepBodies.item(0).parentComponent.name
+                        )
+            occurances = [str(x).split(" ")[0] for x in occurances]
             occurances, quantity = np.unique(occurances, return_counts=True)
             excess[context["plateParts"][i]["plateId"]] = {
                 "occurances": occurances.tolist(),
@@ -58,12 +56,13 @@ def start(context):
                 + context["plateParts"][i]["plateId"]
                 + ".png"
             )
-            # doc.close(False)
-        app.log(str(excess))
+            doc.close(False)
+        app.log("EXCESSSSSSS: " + str(excess))
         app.log("hello")
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36"
-        }
+        # headers = {
+        #     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36",
+        #     "Content-Type": "application/json",
+        # }
 
         opened_files = []
         try:
@@ -74,14 +73,17 @@ def start(context):
                 files_payload.append(
                     ("screenshots", (f"{plate_id}.png", f, "image/png"))
                 )
-
+            data = {"json": json.dumps(excess)}
             x = requests.post(
                 "http://127.0.0.1:5000/mt/webhook/not_fit",
-                headers=headers,
-                data=excess,
+                # headers=headers,
+                data=data,
                 files=files_payload,
                 timeout=30,
             )
+        except Exception as e:
+            app.log("Error during request: " + str(e))
+            raise e
         finally:
             for f in opened_files:
                 try:

@@ -79,6 +79,7 @@ def start(context):
                 f"../temp/{context['parts'][0]['name']}.zip",
             )
         )
+        app.log("hello")
         app.activeDocument.close(False)
 
     except Exception as e:
