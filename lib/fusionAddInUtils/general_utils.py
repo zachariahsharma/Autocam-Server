@@ -60,5 +60,3 @@ def handle_error(name: str, show_message_box: bool = False):
     log(f'{name}\n{traceback.format_exc()}', adsk.core.LogLevels.ErrorLogLevel)
 
     # If desired you could show an error as a message box.
-    if show_message_box:
-        ui.messageBox(f'{name}\n{traceback.format_exc()}')

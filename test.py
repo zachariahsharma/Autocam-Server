@@ -1,190 +1,382 @@
 import adsk.core, adsk.fusion, adsk.cam, traceback
-import threading, sys, time
+import os
+import queue
+import re
+import sys
+import threading
+import time
+from typing import List, Optional
 from .workflows import importPlate as importPlate
 from .workflows import camPlate as camPlate
 from .workflows import camTube as camTube
-import queue, json
+from .workflows import setupTemp as setupTemp
 from .config import *
+import requests
 
-sys.path.append(OVERRIDE_PATH)
-from flask import Flask, request
-from werkzeug.serving import make_server  # <-- add this
+_ADDIN_DIR = os.path.dirname(os.path.realpath(__file__))
+_ENV_PATH = os.path.join(_ADDIN_DIR, ".env")
+_API_KEY_LINE_RE = re.compile(r"^\s*API_KEY\s*=\s*(?P<value>.*)\s*$")
 
 
 _app = adsk.core.Application.cast(None)
 _ui = adsk.core.UserInterface.cast(None)
+_server_thread = None  # type: Optional[threading.Thread]
+_stop_event = None  # type: Optional[threading.Event]
+session = None  # type: Optional[requests.Session]
+_custom_event = None  # type: Optional[adsk.core.CustomEvent]
+_handlers = []  # type: List[adsk.core.EventHandler]
+_job_queue = queue.Queue()  # type: queue.Queue
+_log_queue = queue.Queue()  # type: queue.Queue
+_job_processing = threading.Event()
 
-_jobs = queue.Queue()
-CUSTOM_EVENT_ID = "test.webhook.import"
-
-_handler = None
-
-_flask_app = Flask(__name__)
-
-# --- HTTP server + thread holders ---
-_http_server = None  # will hold make_server(...)
-_flask_thread = None  # thread that calls serve_forever()
+_JOB_QUEUE_EVENT_ID = f"{ADDIN_NAME}_job_queue_event"
 
 
-# --- Custom event handler and dispatcher ---
-class WebhookHandler(adsk.core.CustomEventHandler):
-    def notify(self, args: adsk.core.CustomEventArgs):
+def _drain_queue(q: "queue.Queue") -> None:
+    while True:
         try:
-            while not _jobs.empty():
-                job = _jobs.get_nowait()
-                task = (job or {}).get("__task", "importPlate")
-                if task == "autocam":
-                    camPlate.start(job)
-                elif task == "boxtube":
-                    camTube.start(job)
-                else:
-                    importPlate.start(job)
+            q.get_nowait()
+        except queue.Empty:
+            break
+        try:
+            q.task_done()
         except Exception:
-            if _ui:
-                _ui.messageBox("Job error:\n{}".format(traceback.format_exc()))
+            pass
 
 
-@_flask_app.route("/breakdown", methods=["POST"])
-def home():
-    fusion_app = adsk.core.Application.get()
-    fusion_app.log("Flask endpoint /breakdown was called")
-    body = request.get_data(cache=True, as_text=True)
-    json_payload = request.get_json(silent=True)
-
-    fusion_app.log(f"Method: {request.method}")
-    fusion_app.log(f"Path: {request.path}")
-    fusion_app.log(f"Headers: {dict(request.headers)}")
-    fusion_app.log(f"Body: {body!r}")
-    fusion_app.log(f"JSON: {type(json_payload)}")
-
-    job = json_payload or {}
-    job["__task"] = "importPlate"
-    _jobs.put(job)
-    fusion_app.fireCustomEvent(CUSTOM_EVENT_ID, json.dumps({"path": request.path}))
-    return "OK", 200
+def _queue_log(message: str) -> None:
+    try:
+        _log_queue.put_nowait(message)
+        _fire_job_queue_event()
+    except Exception:
+        pass
 
 
-@_flask_app.route("/autocam", methods=["POST"])
-def autocam():
-    fusion_app = adsk.core.Application.get()
-    fusion_app.log("Flask endpoint /autocam was called")
-    body = request.get_data(cache=True, as_text=True)
-    json_payload = request.get_json(silent=True)
-
-    fusion_app.log(f"Method: {request.method}")
-    fusion_app.log(f"Path: {request.path}")
-    fusion_app.log(f"Headers: {dict(request.headers)}")
-    fusion_app.log(f"Body: {body!r}")
-    fusion_app.log(f"JSON: {type(json_payload)}")
-
-    job = json_payload or {}
-    job["__task"] = "autocam"
-    _jobs.put(job)
-    fusion_app.fireCustomEvent(CUSTOM_EVENT_ID, json.dumps({"path": request.path}))
-    return "OK", 200
+def _fire_job_queue_event() -> None:
+    try:
+        if _app:
+            _app.fireCustomEvent(_JOB_QUEUE_EVENT_ID, "")
+    except Exception:
+        pass
 
 
-@_flask_app.route("/boxtube", methods=["POST"])
-def boxtube():
-    fusion_app = adsk.core.Application.get()
-    fusion_app.log("Flask endpoint /boxtube was called")
-    body = request.get_data(cache=True, as_text=True)
-    json_payload = request.get_json(silent=True)
-
-    fusion_app.log(f"Method: {request.method}")
-    fusion_app.log(f"Path: {request.path}")
-    fusion_app.log(f"Headers: {dict(request.headers)}")
-    fusion_app.log(f"Body: {body!r}")
-    fusion_app.log(f"JSON: {type(json_payload)}")
-
-    job = json_payload or {}
-    job["__task"] = "boxtube"
-    _jobs.put(job)
-    fusion_app.fireCustomEvent(CUSTOM_EVENT_ID, json.dumps({"path": request.path}))
-    return "OK", 200
+def _process_job(job: dict, session: requests.Session) -> None:
+    kind = job.get("kind")
+    _app.log(str(job))
+    if kind == "plate:cam":
+        camPlate.start(job, session)
+    elif kind == "box_tube":
+        camTube.start(job, session)
+    elif kind == "plate:arrange":
+        importPlate.start(job, session)
+    else:
+        raise ValueError(f"Unknown job type: {kind!r}")
 
 
-def _start_http_server():
-    """
-    Start a controllable WSGI server so we can shut it down in stop().
-    """
-    global _http_server
-    # Bind to localhost; fixed port
-    _http_server = make_server("0.0.0.0", 51234, _flask_app)
+class _JobQueueEventHandler(adsk.core.CustomEventHandler):
+    def __init__(self, session: requests.Session):
+        super().__init__()
+        self.session = session
 
-    # (Optional) push an app context if your routes use `current_app`, etc.
-    # ctx = _flask_app.app_context()
-    # ctx.push()
+    def notify(self, args: "adsk.core.CustomEventArgs") -> None:
+        try:
+            while True:
+                try:
+                    message = _log_queue.get_nowait()
+                except queue.Empty:
+                    break
+                try:
+                    if _app:
+                        _app.log(str(message))
+                finally:
+                    _log_queue.task_done()
 
-    # This blocks until shutdown() is called:
-    _http_server.serve_forever()
+            if _job_processing.is_set():
+                return
+
+            while True:
+                try:
+                    job = _job_queue.get_nowait()
+                except queue.Empty:
+                    break
+
+                _job_processing.set()
+                try:
+                    _process_job(job, session=self.session)
+                except Exception:
+                    if _app:
+                        _app.log(
+                            "Error processing job:\n{}".format(traceback.format_exc())
+                        )
+                finally:
+                    _job_processing.clear()
+                    _job_queue.task_done()
+        except Exception:
+            if _app:
+                _app.log(
+                    "Error in job queue event handler:\n{}".format(
+                        traceback.format_exc()
+                    )
+                )
 
 
-def run(context):
+def _mask_api_key(api_key: Optional[str]) -> str:
+    if not api_key:
+        return "<not set>"
+    api_key = api_key.strip()
+    if len(api_key) <= 8:
+        return "*" * len(api_key)
+    return f"{api_key[:4]}…{api_key[-4:]}"
+
+
+def _read_api_key_from_env_file(env_path: str) -> Optional[str]:
+    try:
+        with open(env_path, "r", encoding="utf-8") as f:
+            for raw_line in f:
+                line = raw_line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                match = _API_KEY_LINE_RE.match(line)
+                if not match:
+                    continue
+                value = match.group("value").strip()
+                if (value.startswith('"') and value.endswith('"')) or (
+                    value.startswith("'") and value.endswith("'")
+                ):
+                    value = value[1:-1]
+                value = value.strip()
+                return value or None
+    except FileNotFoundError:
+        return None
+    except Exception:
+        return None
+
+
+def _write_api_key_to_env_file(env_path: str, api_key: str) -> None:
+    api_key = api_key.strip()
+    safe_value = api_key.replace("\\", "\\\\").replace('"', '\\"')
+    api_key_line = f'API_KEY="{safe_value}"\n'
+
+    lines = []  # type: List[str]
+    try:
+        with open(env_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+    except FileNotFoundError:
+        lines = []
+
+    replaced = False
+    new_lines = []  # type: List[str]
+    for line in lines:
+        if _API_KEY_LINE_RE.match(line):
+            new_lines.append(api_key_line)
+            replaced = True
+        else:
+            new_lines.append(line)
+
+    if not replaced:
+        if new_lines and not new_lines[-1].endswith("\n"):
+            new_lines[-1] = new_lines[-1] + "\n"
+        new_lines.append(api_key_line)
+
+    with open(env_path, "w", encoding="utf-8") as f:
+        f.writelines(new_lines)
+
+
+def _prompt_for_api_key(
+    ui: adsk.core.UserInterface, existing_key: Optional[str]
+) -> Optional[str]:
+    default_value = (existing_key or "").strip()
+    while True:
+        value, cancelled = ui.inputBox(
+            "Enter your API key (stored locally in this add-in's .env file).",
+            "API Key",
+            default_value,
+        )
+        if cancelled:
+            return None
+        value = (value or "").strip()
+        if value:
+            return value
+        ui.messageBox("API key cannot be empty.")
+
+
+def _startup_key_gate(
+    ui: adsk.core.UserInterface, api_key: Optional[str], timeout_s: int = 10
+) -> Optional[str]:
+    if not api_key:
+        new_key = _prompt_for_api_key(ui, existing_key=None)
+        if not new_key:
+            return None
+        _write_api_key_to_env_file(_ENV_PATH, new_key)
+        os.environ["API_KEY"] = new_key
+        return new_key
+
+    progress = ui.createProgressDialog()
+    progress.isCancelButtonShown = True
+    progress.show(
+        "Starting Add-In",
+        "",
+        0,
+        max(timeout_s, 1),
+        1,
+    )
+
+    start_time = time.monotonic()
+    last_shown_remaining = None
+    while True:
+        elapsed = time.monotonic() - start_time
+        remaining = max(0, int(timeout_s - elapsed))
+        if remaining != last_shown_remaining:
+            progress.message = (
+                f"API key {_mask_api_key(api_key)} loaded.\n"
+                f"Starting in {remaining} seconds...\n\n"
+                "Click Cancel to edit the API key."
+            )
+            progress.progressValue = int(elapsed)
+            last_shown_remaining = remaining
+
+        adsk.doEvents()
+
+        if progress.wasCancelled:
+            progress.hide()
+            new_key = _prompt_for_api_key(ui, existing_key=api_key)
+            if new_key:
+                _write_api_key_to_env_file(_ENV_PATH, new_key)
+                os.environ["API_KEY"] = new_key
+                return new_key
+            return api_key
+
+        if elapsed >= timeout_s:
+            break
+
+        time.sleep(0.1)
+
+    progress.hide()
+    os.environ["API_KEY"] = api_key
+    return api_key
+
+
+def handleServer(temp_dir: str, stop_event: threading.Event):
+    while not stop_event.is_set():
+    # for i in range(1):
+        try:
+            if _job_processing.is_set() or not _job_queue.empty():
+                stop_event.wait(0.2)
+                continue
+            if session is None:
+                raise RuntimeError("HTTP session not initialized.")
+            response = session.post(
+                "http://localhost:3000/api/jobs/request",
+                json={"kind": "plate:cam"},
+                timeout=30,
+            )
+            if stop_event.is_set():
+                break
+            if response.status_code == 204:
+                stop_event.wait(0.5)
+                continue
+            data = response.json()
+            if not isinstance(data, dict):
+                raise TypeError(f"Unexpected job payload type: {type(data)}")
+            payload = data.get("payload")
+            if not isinstance(payload, dict):
+                payload = {}
+                data["payload"] = payload
+            payload["length"] = 24
+            payload["width"] = 48
+            payload["true_depth"] = 0.125
+            try:
+                if isinstance(payload, dict) and payload.get("assignments"):
+                    setupTemp.downloadFiles(temp_dir, data, session)
+            except Exception:
+                _queue_log(
+                    "Error downloading files:\n{}".format(traceback.format_exc())
+                )
+
+            if stop_event.is_set():
+                break
+            _job_queue.put(data)
+            _fire_job_queue_event()
+        except Exception:
+            _queue_log("Error handling job:\n{}".format(traceback.format_exc()))
+            stop_event.wait(1)
+
+
+def run(_context):
     ui = None
+    fusion_app = None
     try:
         fusion_app = adsk.core.Application.get()
         ui = fusion_app.userInterface
-        global _app, _ui, _handler, _flask_thread
+        global _app, _ui, _server_thread, _stop_event, session, _custom_event, _handlers
         _app, _ui = fusion_app, ui
 
-        # Register custom event & attach handler (Fusion API pattern)
-        # Note: registerCustomEvent returns None; add the handler via the event object:
-        if _handler is None:
-            _handler = WebhookHandler()
-            fusion_app.registerCustomEvent(CUSTOM_EVENT_ID).add(_handler)
-            # Attach the handler to the named custom event:
+        api_key = _startup_key_gate(
+            ui, _read_api_key_from_env_file(_ENV_PATH), timeout_s=1
+        )
+        if not api_key:
+            ui.messageBox("Add-in not started (no API key set).")
+            return
 
-        ui.messageBox("Starting Flask…")
+        session = requests.Session()
+        session.headers.update({"Authorization": f"Bearer {api_key}"})
 
-        if _flask_thread is None or not _flask_thread.is_alive():
-            _flask_thread = threading.Thread(target=_start_http_server, daemon=True)
-            _flask_thread.start()
+        _job_processing.clear()
+        _drain_queue(_job_queue)
+        _drain_queue(_log_queue)
 
-        time.sleep(0.4)  # let the server spin up
-        ui.messageBox("Flask is running on http://192.168.1.83:51234")
+        try:
+            _app.unregisterCustomEvent(_JOB_QUEUE_EVENT_ID)
+        except Exception:
+            pass
+
+        _custom_event = _app.registerCustomEvent(_JOB_QUEUE_EVENT_ID)
+        handler = _JobQueueEventHandler(session)
+        _custom_event.add(handler)
+        _handlers.append(handler)
+
+        temp = setupTemp.setupTempDir()
+        _stop_event = threading.Event()
+        _server_thread = threading.Thread(
+            target=handleServer,
+            args=(temp, _stop_event),
+            daemon=True,
+        )
+        _server_thread.start()
 
     except:
         if ui:
             ui.messageBox("Failed:\n{}".format(traceback.format_exc()))
+            fusion_app.log("Failed:\n{}".format(traceback.format_exc()))
 
 
 def stop(context):
-    """
-    Clean up: remove the event handler, unregister the custom event,
-    and shutdown the Flask WSGI server thread cleanly.
-    """
     try:
-        # 1) Detach handler and unregister the event (ignore failures)
-        if _app:
+        global _stop_event, _server_thread, _custom_event, _handlers, session
+        if _stop_event:
+            _stop_event.set()
+        if _server_thread and _server_thread.is_alive():
+            _server_thread.join(timeout=2)
+        try:
+            if _app:
+                _app.unregisterCustomEvent(_JOB_QUEUE_EVENT_ID)
+        except Exception:
+            pass
+        _custom_event = None
+        _handlers = []
+        if session:
             try:
-                if _handler:
-                    _app.customEvent(CUSTOM_EVENT_ID).remove(_handler)
-            except:
-                pass
-            try:
-                _app.unregisterCustomEvent(CUSTOM_EVENT_ID)
-            except:
-                pass
-
-        # 2) Shutdown HTTP server and join the thread
-        global _http_server, _flask_thread
-        if _http_server is not None:
-            try:
-                _http_server.shutdown()  # tells serve_forever() to exit
+                session.close()
             except Exception:
-                if _ui:
-                    _ui.messageBox(
-                        "HTTP server shutdown error:\n{}".format(traceback.format_exc())
-                    )
-            finally:
-                _http_server = None
-
-        if _flask_thread is not None and _flask_thread.is_alive():
-            # Give it a moment to unwind
-            _flask_thread.join(timeout=2.0)
-            _flask_thread = None
+                pass
+        session = None
+        _job_processing.clear()
+        _drain_queue(_job_queue)
+        _drain_queue(_log_queue)
+        _stop_event = None
+        _server_thread = None
 
     except:
         if _ui:
             _ui.messageBox("Failed stop:\n{}".format(traceback.format_exc()))
+            _app.log("Failed:\n{}".format(traceback.format_exc()))
