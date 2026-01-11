@@ -2,3 +2,5 @@ temp/
 .overridepath
 .env
 __pycache__/
+2.json
+test.ipynb
