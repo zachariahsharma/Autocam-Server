@@ -258,8 +258,9 @@ def _startup_key_gate(
 
 def handleServer(temp_dir: str, stop_event: threading.Event):
     while not stop_event.is_set():
-    # for i in range(1):
+        # for i in range(1):
         try:
+            time.sleep(5)
             if _job_processing.is_set() or not _job_queue.empty():
                 stop_event.wait(0.2)
                 continue
@@ -267,7 +268,7 @@ def handleServer(temp_dir: str, stop_event: threading.Event):
                 raise RuntimeError("HTTP session not initialized.")
             response = session.post(
                 "http://localhost:3000/api/jobs/request",
-                json={"kind": "plate:cam"},
+                # json={"kind": "plate:cam"},
                 timeout=30,
             )
             if stop_event.is_set():
@@ -282,9 +283,6 @@ def handleServer(temp_dir: str, stop_event: threading.Event):
             if not isinstance(payload, dict):
                 payload = {}
                 data["payload"] = payload
-            payload["length"] = 24
-            payload["width"] = 48
-            payload["true_depth"] = 0.125
             try:
                 if isinstance(payload, dict) and payload.get("assignments"):
                     setupTemp.downloadFiles(temp_dir, data, session)

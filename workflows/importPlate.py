@@ -11,6 +11,8 @@ sys.path.append("/Users/zachsharma/miniconda3/envs/Fusion/lib/python3.14/site-pa
 
 import json
 import os
+import requests
+from typing import Optional
 
 
 def _delete_all(coll):
@@ -67,6 +69,19 @@ def _normalize_quantity(value) -> int:
         return 1
 
 
+def _fetch_plate_data(session: requests.Session, plate_id: int) -> Optional[dict]:
+    """Fetch plate data from API and return plate info with length, width, and true_depth."""
+    try:
+        resp = session.get(f"http://localhost:3000/api/plates/{plate_id}", timeout=30)
+        resp.raise_for_status()
+        plate_data = resp.json()
+        if not isinstance(plate_data, dict):
+            return None
+        return plate_data
+    except Exception:
+        return None
+
+
 def start(data, session):
     app = adsk.core.Application.get()
     ui = app.userInterface
@@ -89,7 +104,26 @@ def start(data, session):
         comp: adsk.fusion.Component = app.activeProduct.rootComponent
         for occ in comp.allOccurrences:
             res = orient_plate_pocket_side_up(occ)
-        arrange = AutoArrange(data["payload"]["length"], data["payload"]["width"])
+        
+        # Fetch plate data from API to get actual length and width
+        plate_id_raw = data["payload"].get("plate_id") or data["payload"].get("plateId")
+        plate_data = None
+        if plate_id_raw is not None:
+            try:
+                plate_id_int = int(plate_id_raw)
+                plate_data = _fetch_plate_data(session, plate_id_int)
+            except Exception:
+                pass
+        
+        # Use plate data from API if available, otherwise fall back to payload or defaults
+        if plate_data and isinstance(plate_data, dict):
+            length = float(plate_data.get("length", data["payload"].get("length", 24)))
+            width = float(plate_data.get("width", data["payload"].get("width", 48)))
+        else:
+            length = float(data["payload"].get("length", 24))
+            width = float(data["payload"].get("width", 48))
+        
+        arrange = AutoArrange(length, width)
         occurances = []
         for envelope in arrange.resultEnvelopes:
             app.log(f"Arranging envelope {envelope.name}")
@@ -110,8 +144,8 @@ def start(data, session):
 
         screenshot_path = ""
         screenshot_path = screenshotEnvelope(
-            float(data["payload"]["length"]),
-            float(data["payload"]["width"]),
+            length,
+            width,
             str(data["payload"]["plate_id"]),
         )
         # doc.close(False)
@@ -156,14 +190,17 @@ def start(data, session):
         #     except:
         #         pass
         app.log(str(resp.status_code) + " " + resp.reason)
-    except:
+    except Exception as e:
         if app:
             app.log("Failed:\n{}".format(traceback.format_exc()))
             session.post(
                 "http://localhost:3000/api/jobs/complete",
-                data={
-                    "error": traceback.format_exc(),
+                files={
+                    "data": (
+                        None,
+                        json.dumps({"error": traceback.format_exc()}),
+                        "application/json",
+                    )
                 },
-                files={},
                 timeout=30,
             )

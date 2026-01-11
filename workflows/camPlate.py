@@ -191,6 +191,19 @@ def _download_machine_post_processor(
     return info, out_path
 
 
+def _fetch_plate_data(session: requests.Session, plate_id: int) -> Optional[dict]:
+    """Fetch plate data from API and return plate info with length, width, and true_depth."""
+    try:
+        resp = session.get(f"http://localhost:3000/api/plates/{plate_id}", timeout=30)
+        resp.raise_for_status()
+        plate_data = resp.json()
+        if not isinstance(plate_data, dict):
+            return None
+        return plate_data
+    except Exception:
+        return None
+
+
 def start(data, session):
     app = adsk.core.Application.get()
     ui = app.userInterface
@@ -232,8 +245,26 @@ def start(data, session):
             [child.get("quantity", 1) for child in assignments],
         )
 
-        length = float(_get(payload, "length", default=24))
-        width = float(_get(payload, "width", default=48))
+        # Fetch plate data from API to get actual length, width, and true_depth
+        plate_id_raw = _get(payload, "plate_id", "plateId")
+        plate_data = None
+        if plate_id_raw is not None:
+            try:
+                plate_id_int = int(plate_id_raw)
+                plate_data = _fetch_plate_data(session, plate_id_int)
+            except Exception:
+                pass
+
+        # Use plate data from API if available, otherwise fall back to payload or defaults
+        if plate_data and isinstance(plate_data, dict):
+            length = float(plate_data.get("length", _get(payload, "length", default=24)))
+            width = float(plate_data.get("width", _get(payload, "width", default=48)))
+            true_depth = float(plate_data.get("true_depth", _get(payload, "true_depth", "trueDepth", default=0.125)))
+        else:
+            length = float(_get(payload, "length", default=24))
+            width = float(_get(payload, "width", default=48))
+            true_depth = float(_get(payload, "true_depth", "trueDepth", default=0.125))
+
         AutoArrange(length, width)
 
         # Handle tool_id as a list
@@ -461,17 +492,20 @@ def start(data, session):
                     "Failed to patch CAM template:\n{}".format(traceback.format_exc())
                 )
 
+        # Use true_depth from plate data if available, otherwise from payload or default
+        thickness = true_depth if plate_data else float(
+            _get(
+                payload,
+                "thickness",
+                default=_get(payload, "true_depth", "trueDepth", default=0.125),
+            )
+        )
+
         SetupGenerator(
             machine_name or _get(payload, "machine"),
-            float(_get(payload, "true_depth", "trueDepth", default=0.125)),
+            true_depth,
             material_name or _get(payload, "material"),
-            float(
-                _get(
-                    payload,
-                    "thickness",
-                    default=_get(payload, "true_depth", "trueDepth", default=0.125),
-                )
-            ),
+            thickness,
             template_path=template_path,
         )
         DeleteToolpaths()
@@ -546,7 +580,6 @@ def start(data, session):
             )
         app.log(str(resp.status_code) + " " + resp.reason)
         doc.close(False)
-        raise Exception("Debug: Stop before cleanup")
         app.log(f"Closed document '{doc_name}'")
         try:
             if resp.ok:
