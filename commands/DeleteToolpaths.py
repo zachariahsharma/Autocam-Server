@@ -38,9 +38,6 @@ def DeleteToolpaths():
 
     # Ensure we are in the CAM workspace
     cam = adsk.cam.CAM.cast(design)
-    if not cam:
-        ui.messageBox("Switch to the CAM workspace.")
-        return
     # Get all setups
     pastCache = 0
     allSetups = cam.setups

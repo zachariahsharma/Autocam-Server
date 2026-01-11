@@ -4,8 +4,12 @@
 import os
 
 with open(os.path.join(os.path.dirname(__file__), ".overridepath")) as f:
-    OVERRIDE_PATH = f.readline().strip()
-    STEPBASEPATH = f.readline().strip()
+    OVERRIDE_PATH = f.read().strip()
+
+TEMP_PATH = os.path.join(os.path.dirname(__file__), "temp")
+INITIAL_PATH = os.path.join(TEMP_PATH, "initial")
+FINAL_PATH = os.path.join(TEMP_PATH, "final")
+TOOLS_PATH = os.path.join(TEMP_PATH, "tools")
 
 # Flag that indicates to run in Debug mode or not. When running in Debug mode
 # more information is written to the Text Command window. Generally, it's useful

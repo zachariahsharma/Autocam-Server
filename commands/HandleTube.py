@@ -92,7 +92,7 @@ def alignEdgeToYAxis(
     bodyOcc.transform = occTransform
 
 
-def handleTube():
+def handleTube(template):
     app = adsk.core.Application.get()
     ui = app.userInterface
     doc = app.activeDocument
@@ -264,7 +264,7 @@ def handleTube():
     Yflip = [True, True, True, True]
     name = ["Top", "Right", "Bottom", "Left"]
     tubesTemplateFile = adsk.cam.CAMTemplate.createFromFile(
-        os.path.join(os.path.dirname(__file__), "../templates/Tubes.f3dhsm-template")
+        os.path.join(os.path.dirname(__file__), template)
     )
     tubesTemplate = adsk.cam.CreateFromCAMTemplateInput.create()
     tubesTemplate.camTemplate = tubesTemplateFile

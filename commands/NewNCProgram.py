@@ -8,7 +8,7 @@ import re
 import time
 
 
-def export(name):
+def export(name, machine):
     ui = None
     app = adsk.core.Application.get()
     ui = app.userInterface
@@ -16,14 +16,11 @@ def export(name):
 
     # Ensure we are in the CAM workspace
     cam = adsk.cam.CAM.cast(design)
-    if not cam:
-        ui.messageBox("Switch to the CAM workspace.")
-        return
-    # Get all setups
     allSetups = cam.setups
-    baseDir = os.path.dirname(os.path.realpath(__file__))
-    folder_path = os.path.join(baseDir, f"../temp/{name}")
-    absolutePath = os.path.join(baseDir, "../templates/Laguna.cps")
+    absolutePath = os.path.join(TOOLS_PATH, f"machine_{machine}.cps")
+    folder_path = os.path.join(FINAL_PATH, name)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
     for setup in allSetups:
         releventToolpaths = {
             "Drills": [],

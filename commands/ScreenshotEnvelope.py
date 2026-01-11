@@ -1,72 +1,70 @@
-import adsk.core, adsk.fusion, adsk.cam, traceback
-import os, platform, math
-
-# === CONFIG: Your region on the XY plane ===
-X_OFFSET_CM = 40.0  # 40 cm X offset (left edge)
-
-# Output image size (keep aspect = height/width). 1000x2000 is crisp and lightweight.
-OUT_WIDTH_PX = 800
-OUT_HEIGHT_PX = 2000
-
-# Optional: file name
+import adsk.core, os
+from ..config import FINAL_PATH
+import time
 
 
-# === Helpers ===
-def _temp_path():
-    return os.path.join(os.path.dirname(os.path.realpath(__file__)), "../temp")
+def apply_camera(vp, cam):
+    cam.isSmoothTransition = False  # important: don’t animate
+    vp.camera = cam
+
+    adsk.doEvents()
+    vp.refresh()
+    adsk.doEvents()
+
+    vp.camera = vp.camera
+    adsk.doEvents()
+    vp.refresh()
+    adsk.doEvents()
 
 
-def _cm(val_in_inches: float) -> float:
-    return val_in_inches * 2.54
+def _pump_events_for(seconds: float) -> None:
+    end_time = time.monotonic() + max(0.0, float(seconds))
+    while time.monotonic() < end_time:
+        adsk.doEvents()
 
 
-def screenshotEnvelope(height, width, plateid):
+def screenshotEnvelope(
+    length_in, width_in, plate_id, *, settle_s: float = 0.0, debug: bool = False
+):
     app = adsk.core.Application.get()
     ui = app.userInterface
     vp = app.activeViewport
 
-    # Convert given size to centimeters (Fusion internal length unit)
-    width_cm = _cm(width)
-    height_cm = _cm(height)
+    length_cm = float(length_in) * 2.54
+    width_cm = float(width_in) * 2.54
 
-    # Center of the rectangle assuming its lower-left corner at (X_OFFSET_CM, 0)
-    cx = X_OFFSET_CM + (width_cm / 2.0)
-    cy = 0.0 + height_cm / 2.0
-    cz = 0.0
+    cx, cy, cz = 40.0 + length_cm / 2, 0.0 + width_cm / 2, 0.0
 
-    desired_aspect = height_cm / width_cm
-    # If caller-specified OUT_WIDTH/HEIGHT don't match aspect, auto-fix height
-    out_w = OUT_WIDTH_PX
-    out_h = int(round(out_w * desired_aspect))
+    out_w = 800
+    if length_cm <= 0 or width_cm <= 0:
+        raise ValueError(
+            f"Invalid plate size: length={length_in!r}, width={width_in!r}"
+        )
+    out_h = int(round(out_w * (width_cm / length_cm)))
 
-    # Build a top-down orthographic camera looking at the XY plane
-    cam = vp.camera
+    _pump_events_for(settle_s)
+
+    cam = vp.camera  # copy
     cam.cameraType = adsk.core.CameraTypes.OrthographicCameraType
     cam.isFitView = False
-    # Target = center of the rectangle; Eye = slightly above along +Z
-    target = adsk.core.Point3D.create(cx, cy, cz)
-    eye = adsk.core.Point3D.create(
-        cx, cy, cz + 1
-    )  # 100 cm above; distance doesn't affect ortho scale
-    cam.target = target
-    cam.eye = eye
+    cam.isSmoothTransition = False
+    app.log(f"Setting camera eye to ({cx}, {cy}, {cz + 100.0})")
+    cam.target = adsk.core.Point3D.create(cx, cy, cz)
+    cam.eye = adsk.core.Point3D.create(cx, cy, cz + 100.0)
 
-    # Up vector along +Y to Akeep "height" vertical on screen
     cam.upVector = adsk.core.Vector3D.create(0, 1, 0)
-    cam.setExtents(width_cm, height_cm)
-    # app.log(f"Camera extents set to {cam.getExtents()[1]} cm width x {cam.getExtents()[2]} cm height")
-    # Apply camera and refresh
-    vp.camera = cam
-    adsk.doEvents()
-    vp.refresh()
+    apply_camera(vp, cam)
 
-    # Save the image to temp
-    temp = _temp_path()
-    if not os.path.isdir(temp):
-        os.makedirs(temp, exist_ok=True)
-    out_path = os.path.join(temp, plateid + ".png")
+    cam = vp.camera  # copy (Fusion can normalize/adjust camera on assignment)
+    cam.cameraType = adsk.core.CameraTypes.OrthographicCameraType
+    cam.isFitView = False
+    cam.isSmoothTransition = False
+    app.log(f"Setting extents to {length_cm} cm x {width_cm} cm")
+    cam.setExtents(length_cm, width_cm)
+    apply_camera(vp, cam)
 
-    # SaveAsImage(width, height) captures exactly what's framed by the camera
+    out_path = os.path.join(FINAL_PATH, f"{plate_id}.png")
     ok = vp.saveAsImageFile(out_path, out_w, out_h)
     if not ok:
-        raise RuntimeError("Viewport.saveAsImage returned False (image not saved).")
+        raise RuntimeError("saveAsImageFile returned False")
+    return out_path
