@@ -13,7 +13,7 @@ from ..commands.MultiImport import importFiles
 from ..commands.NewNCProgram import export
 from ..commands.DeleteToolpaths import DeleteToolpaths
 from ..commands.AutoArrange import AutoArrange
-from ..config import FINAL_PATH, INITIAL_PATH, TEMP_PATH, TOOLS_PATH
+from ..config import BASE_URL, FINAL_PATH, INITIAL_PATH, TEMP_PATH, TOOLS_PATH
 from .importPlate import clear_design_nuke
 from .templateTools import patch_cam_template_with_tool_libraries
 
@@ -90,7 +90,7 @@ def _download_tool_library_json(
     session: requests.Session, tool_id: int, dest_dir: str
 ) -> tuple[dict, str]:
     os.makedirs(dest_dir, exist_ok=True)
-    resp = session.get(f"http://localhost:3000/api/tools/{tool_id}", timeout=30)
+    resp = session.get(f"{BASE_URL}/api/tools/{tool_id}", timeout=30)
     resp.raise_for_status()
     info = resp.json()
     if not isinstance(info, dict):
@@ -118,7 +118,7 @@ def _first_material_name(session: requests.Session, material_ids) -> Optional[st
     except Exception:
         return None
 
-    resp = session.get("http://localhost:3000/api/materials", timeout=30)
+    resp = session.get("{BASE_URL}/api/materials", timeout=30)
     resp.raise_for_status()
     data = resp.json()
     if not isinstance(data, list):
@@ -144,7 +144,7 @@ def _machine_name(session: requests.Session, machine_id) -> Optional[str]:
     except Exception:
         return None
 
-    resp = session.get("http://localhost:3000/api/machines", timeout=30)
+    resp = session.get("{BASE_URL}/api/machines", timeout=30)
     resp.raise_for_status()
     data = resp.json()
     if not isinstance(data, list):
@@ -167,7 +167,7 @@ def _download_machine_post_processor(
 ) -> tuple[dict, str]:
     """Download machine post processor file from API and return machine info and file path."""
     os.makedirs(dest_dir, exist_ok=True)
-    resp = session.get(f"http://localhost:3000/api/machines/{machine_id}", timeout=30)
+    resp = session.get(f"{BASE_URL}/api/machines/{machine_id}", timeout=30)
     resp.raise_for_status()
     info = resp.json()
     if not isinstance(info, dict):
@@ -194,7 +194,7 @@ def _download_machine_post_processor(
 def _fetch_plate_data(session: requests.Session, plate_id: int) -> Optional[dict]:
     """Fetch plate data from API and return plate info with length, width, and true_depth."""
     try:
-        resp = session.get(f"http://localhost:3000/api/plates/{plate_id}", timeout=30)
+        resp = session.get(f"{BASE_URL}/api/plates/{plate_id}", timeout=30)
         resp.raise_for_status()
         plate_data = resp.json()
         if not isinstance(plate_data, dict):
@@ -316,7 +316,7 @@ def start(data, session):
         # If no tool_ids provided, pick the first compatible one.
         if not tool_ids:
             try:
-                resp = session.get("http://localhost:3000/api/tools", timeout=30)
+                resp = session.get("{BASE_URL}/api/tools", timeout=30)
                 resp.raise_for_status()
                 tool_list_cache = resp.json()
                 if isinstance(tool_list_cache, dict) and isinstance(
@@ -379,7 +379,7 @@ def start(data, session):
         if tool_ids and machine_id_int is not None:
             try:
                 if tool_list_cache is None:
-                    resp = session.get("http://localhost:3000/api/tools", timeout=30)
+                    resp = session.get("{BASE_URL}/api/tools", timeout=30)
                     resp.raise_for_status()
                     tool_list_cache = resp.json()
                     if isinstance(tool_list_cache, dict) and isinstance(
@@ -563,7 +563,7 @@ def start(data, session):
 
         with open(zip_path, "rb") as bundle_file:
             resp = session.post(
-                "http://localhost:3000/api/jobs/complete",
+                "{BASE_URL}/api/jobs/complete",
                 files={
                     "data": (
                         None,
@@ -596,7 +596,7 @@ def start(data, session):
         if app:
             app.log("Failed:\n{}".format(traceback.format_exc()))
             session.post(
-                "http://localhost:3000/api/jobs/complete",
+                "{BASE_URL}/api/jobs/complete",
                 files={
                     "data": (
                         None,

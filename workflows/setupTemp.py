@@ -16,7 +16,7 @@ def setupTempDir():
 
 def downloadFiles(temp_dir, data, session):
     for part in data["payload"]["assignments"]:
-        partsData = session.get(f"http://localhost:3000/api/parts/{part['part_id']}")
+        partsData = session.get(f"{BASE_URL}/api/parts/{part['part_id']}")
         app = adsk.core.Application.get()
         app.log(str(partsData.json()))
         with open(

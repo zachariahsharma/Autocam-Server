@@ -72,7 +72,7 @@ def _normalize_quantity(value) -> int:
 def _fetch_plate_data(session: requests.Session, plate_id: int) -> Optional[dict]:
     """Fetch plate data from API and return plate info with length, width, and true_depth."""
     try:
-        resp = session.get(f"http://localhost:3000/api/plates/{plate_id}", timeout=30)
+        resp = session.get(f"{BASE_URL}/api/plates/{plate_id}", timeout=30)
         resp.raise_for_status()
         plate_data = resp.json()
         if not isinstance(plate_data, dict):
@@ -156,7 +156,7 @@ def start(data, session):
             if len(excess_parts) == 0:
                 with open(screenshot_path, "rb") as screenshot_file:
                     resp = session.post(
-                        "http://localhost:3000/api/jobs/complete",
+                        "{BASE_URL}/api/jobs/complete",
                         files={
                             "data": (
                                 None,
@@ -173,7 +173,7 @@ def start(data, session):
                     )
             elif len(excess_parts) > 0:
                 resp = session.post(
-                    "http://localhost:3000/api/jobs/complete",
+                    "{BASE_URL}/api/jobs/complete",
                     data={
                         "excessParts": json.dumps(excess_parts),
                         "error": "Excess parts detected",
@@ -194,7 +194,7 @@ def start(data, session):
         if app:
             app.log("Failed:\n{}".format(traceback.format_exc()))
             session.post(
-                "http://localhost:3000/api/jobs/complete",
+                "{BASE_URL}/api/jobs/complete",
                 files={
                     "data": (
                         None,

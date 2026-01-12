@@ -2,6 +2,34 @@
 # This module serves as a way to share variables across different
 # modules (global variables).
 import os
+import re
+
+_ADDIN_DIR = os.path.dirname(os.path.realpath(__file__))
+_ENV_PATH = os.path.join(_ADDIN_DIR, ".env")
+
+def _read_env_value(key: str) -> str:
+    """Read a value from the .env file."""
+    pattern = re.compile(rf"^\s*{key}\s*=\s*(?P<value>.*)\s*$")
+    try:
+        with open(_ENV_PATH, "r", encoding="utf-8") as f:
+            for raw_line in f:
+                line = raw_line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                match = pattern.match(line)
+                if not match:
+                    continue
+                value = match.group("value").strip()
+                if (value.startswith('"') and value.endswith('"')) or (
+                    value.startswith("'") and value.endswith("'")
+                ):
+                    value = value[1:-1]
+                return value.strip()
+    except FileNotFoundError:
+        pass
+    return ""
+
+BASE_URL = _read_env_value("BASE_URL") or "http://localhost:3000"
 
 with open(os.path.join(os.path.dirname(__file__), ".overridepath")) as f:
     OVERRIDE_PATH = f.read().strip()

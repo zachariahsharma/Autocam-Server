@@ -267,7 +267,7 @@ def handleServer(temp_dir: str, stop_event: threading.Event):
             if session is None:
                 raise RuntimeError("HTTP session not initialized.")
             response = session.post(
-                "http://localhost:3000/api/jobs/request",
+                f"{BASE_URL}/api/jobs/request",
                 # json={"kind": "plate:cam"},
                 timeout=30,
             )
