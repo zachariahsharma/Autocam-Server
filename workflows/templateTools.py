@@ -407,6 +407,39 @@ def _apply_tool_to_elem(
             add_param("tool_rampAngle", _fmt_num(float(ramp_angle_deg) / 5.0), expression=ramp_angle_expr)
 
 
+def _find_largest_endmill(indexes: list[dict]) -> Optional[tuple[dict, dict]]:
+    """Find the largest endmill (by diameter) from all tool indexes."""
+    largest_tool = None
+    largest_diameter = 0.0
+    largest_idx = None
+
+    for idx in indexes:
+        tools = idx.get("tools", [])
+        for tool in tools:
+            if not isinstance(tool, dict):
+                continue
+            tool_type = str(tool.get("type") or "").lower()
+            # Check if it's an endmill type (flat end mill, ball end mill, etc.)
+            if "end mill" not in tool_type and "endmill" not in tool_type:
+                continue
+
+            # Get diameter
+            diameter = _parse_number(tool.get("geometry", {}).get("DC"))
+            if diameter is None:
+                diameter = _parse_number(tool.get("expressions", {}).get("tool_diameter"))
+            if diameter is None:
+                continue
+
+            if diameter > largest_diameter:
+                largest_diameter = diameter
+                largest_tool = tool
+                largest_idx = idx
+
+    if largest_tool and largest_idx:
+        return largest_tool, largest_idx
+    return None
+
+
 def patch_cam_template_with_tool_libraries(
     template_path: str,
     output_path: str,
@@ -429,9 +462,26 @@ def patch_cam_template_with_tool_libraries(
     replaced = 0
     missing: list[dict] = []
 
+    # Find the largest endmill for the Suppress operation
+    largest_endmill = _find_largest_endmill(indexes)
+
     for template_elem in root.findall(f".//{_q('template')}"):
         tool_elem = template_elem.find(_q("tool"))
         if tool_elem is None:
+            continue
+
+        # Check if this is the Suppress operation - use largest endmill
+        template_desc = template_elem.get("description", "")
+        if template_desc == "Suppress" and largest_endmill:
+            tool, idx = largest_endmill
+            _apply_tool_to_elem(
+                template_elem,
+                tool_elem,
+                tool,
+                tool_library_version=idx.get("version"),
+                material_name=material_name,
+            )
+            replaced += 1
             continue
 
         signature = _required_tool_signature(tool_elem)

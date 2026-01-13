@@ -156,7 +156,7 @@ def start(data, session):
             if len(excess_parts) == 0:
                 with open(screenshot_path, "rb") as screenshot_file:
                     resp = session.post(
-                        "{BASE_URL}/api/jobs/complete",
+                        f"{BASE_URL}/api/jobs/complete",
                         files={
                             "data": (
                                 None,
@@ -173,7 +173,7 @@ def start(data, session):
                     )
             elif len(excess_parts) > 0:
                 resp = session.post(
-                    "{BASE_URL}/api/jobs/complete",
+                    f"{BASE_URL}/api/jobs/complete",
                     data={
                         "excessParts": json.dumps(excess_parts),
                         "error": "Excess parts detected",
@@ -194,7 +194,7 @@ def start(data, session):
         if app:
             app.log("Failed:\n{}".format(traceback.format_exc()))
             session.post(
-                "{BASE_URL}/api/jobs/complete",
+                f"{BASE_URL}/api/jobs/complete",
                 files={
                     "data": (
                         None,

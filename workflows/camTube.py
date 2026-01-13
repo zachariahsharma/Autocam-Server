@@ -55,7 +55,7 @@ def _first_material_name(session: requests.Session, material_ids) -> Optional[st
     except Exception:
         return None
 
-    resp = session.get("{BASE_URL}/api/materials", timeout=30)
+    resp = session.get(f"{BASE_URL}/api/materials", timeout=30)
     resp.raise_for_status()
     data = resp.json()
     if not isinstance(data, list):
@@ -81,7 +81,7 @@ def _machine_name(session: requests.Session, machine_id) -> Optional[str]:
     except Exception:
         return None
 
-    resp = session.get("{BASE_URL}/api/machines", timeout=30)
+    resp = session.get(f"{BASE_URL}/api/machines", timeout=30)
     resp.raise_for_status()
     data = resp.json()
     if not isinstance(data, list):
@@ -253,7 +253,7 @@ def start(data, session):
         # If no tool_ids provided, pick the first compatible one.
         if not tool_ids:
             try:
-                resp = session.get("{BASE_URL}/api/tools", timeout=30)
+                resp = session.get(f"{BASE_URL}/api/tools", timeout=30)
                 resp.raise_for_status()
                 tool_list_cache = resp.json()
                 if isinstance(tool_list_cache, dict) and isinstance(
@@ -405,7 +405,7 @@ def start(data, session):
 
         with open(zip_path, "rb") as bundle_file:
             resp = session.post(
-                "{BASE_URL}/api/jobs/complete",
+                f"{BASE_URL}/api/jobs/complete",
                 files={
                     "data": (
                         None,
@@ -438,7 +438,7 @@ def start(data, session):
         if app:
             app.log("Failed:\n{}".format(traceback.format_exc()))
             session.post(
-                "{BASE_URL}/api/jobs/complete",
+                f"{BASE_URL}/api/jobs/complete",
                 files={
                     "data": (
                         None,

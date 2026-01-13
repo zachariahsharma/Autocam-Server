@@ -8,6 +8,15 @@ import re
 import time
 
 
+def get_tool_diameter(toolpath):
+    """Get tool diameter in inches from a toolpath"""
+    try:
+        value = toolpath.tool.parameters.itemByName("tool_diameter").value
+        return value.value / 2.54  # Convert from cm to inches
+    except:
+        return 0
+
+
 def export(name, machine):
     ui = None
     app = adsk.core.Application.get()
@@ -36,6 +45,12 @@ def export(name, machine):
                 releventToolpaths["Pocket"].append(toolpath)
             else:
                 releventToolpaths["Profile"].append(toolpath)
+
+        # Sort drills by diameter ascending (smallest first)
+        releventToolpaths["Drills"].sort(key=get_tool_diameter)
+        # Sort pockets by diameter descending (largest first)
+        releventToolpaths["Pocket"].sort(key=get_tool_diameter, reverse=True)
+
         for toolpath in releventToolpaths["Drills"]:
             postProcessInput = adsk.cam.PostProcessInput.create(
                 setup.name[0] + str(toolpath.name).split(" ")[0],
