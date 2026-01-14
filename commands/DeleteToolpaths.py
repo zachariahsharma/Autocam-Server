@@ -67,6 +67,7 @@ def DeleteToolpaths():
         waitForGeneration(setup, waitforcontour=True)
         toolpaths = setup.operations
         for toolpath in toolpaths:
+            app.log(f"Toolpath: {toolpath.name}, Warning: {toolpath.warning}")
             if "empty" in str(toolpath.warning).lower():
                 toolpath.deleteMe()
         cam.generateAllToolpaths(True)

@@ -3,6 +3,7 @@ from ..commands.AutoArrange import AutoArrange
 from ..commands.ScreenshotEnvelope import screenshotEnvelope
 import adsk.core, adsk.fusion, adsk.cam, traceback
 from ..config import *
+from .job_status import ensure_completion_response, send_job_error
 import sys
 from ..commands.Orientation import orient_plate_pocket_side_up
 import time
@@ -104,7 +105,7 @@ def start(data, session):
         comp: adsk.fusion.Component = app.activeProduct.rootComponent
         for occ in comp.allOccurrences:
             res = orient_plate_pocket_side_up(occ)
-        
+
         # Fetch plate data from API to get actual length and width
         plate_id_raw = data["payload"].get("plate_id") or data["payload"].get("plateId")
         plate_data = None
@@ -114,7 +115,7 @@ def start(data, session):
                 plate_data = _fetch_plate_data(session, plate_id_int)
             except Exception:
                 pass
-        
+
         # Use plate data from API if available, otherwise fall back to payload or defaults
         if plate_data and isinstance(plate_data, dict):
             length = float(plate_data.get("length", data["payload"].get("length", 24)))
@@ -122,7 +123,7 @@ def start(data, session):
         else:
             length = float(data["payload"].get("length", 24))
             width = float(data["payload"].get("width", 48))
-        
+
         arrange = AutoArrange(length, width)
         occurances = []
         for envelope in arrange.resultEnvelopes:
@@ -135,9 +136,13 @@ def start(data, session):
         occurances = [str(x).split(" ")[0] for x in occurances]
         occurances, quantity = unique(occurances)
         for part_name, qty in zip(occurances, quantity):
+            try:
+                part_id = int(part_name)
+            except Exception:
+                continue
             excess_parts.append(
                 {
-                    "partId": part_name,
+                    "part_id": part_id,
                     "quantity": int(qty),
                 }
             )
@@ -152,55 +157,51 @@ def start(data, session):
         app.log("EXCESSSSSSS: " + str(excess_parts))
         app.log("hello")
 
-        try:
-            if len(excess_parts) == 0:
-                with open(screenshot_path, "rb") as screenshot_file:
-                    resp = session.post(
-                        f"{BASE_URL}/api/jobs/complete",
-                        files={
-                            "data": (
-                                None,
-                                json.dumps({}),
-                                "application/json",
-                            ),
-                            "file": (
-                                f"{data['payload']['plate_id']}.png",
-                                screenshot_file,
-                                "image/png",
-                            ),
-                        },
-                        timeout=30,
-                    )
-            elif len(excess_parts) > 0:
+        if len(excess_parts) == 0:
+            with open(screenshot_path, "rb") as screenshot_file:
                 resp = session.post(
                     f"{BASE_URL}/api/jobs/complete",
-                    data={
-                        "excessParts": json.dumps(excess_parts),
-                        "error": "Excess parts detected",
+                    files={
+                        "data": (
+                            None,
+                            json.dumps({}),
+                            "application/json",
+                        ),
+                        "file": (
+                            f"{data['payload']['plate_id']}.png",
+                            screenshot_file,
+                            "image/png",
+                        ),
                     },
-                    files={},
                     timeout=30,
                 )
-        except Exception as e:
-            app.log("Error during request: " + str(e))
-            raise e
-        # for screenshot in screenshots.values():
-        #     try:
-        #         os.remove(screenshot)
-        #     except:
-        #         pass
-        app.log(str(resp.status_code) + " " + resp.reason)
-    except Exception as e:
-        if app:
-            app.log("Failed:\n{}".format(traceback.format_exc()))
-            session.post(
+        else:
+            resp = session.post(
                 f"{BASE_URL}/api/jobs/complete",
                 files={
                     "data": (
                         None,
-                        json.dumps({"error": traceback.format_exc()}),
+                        json.dumps(
+                            {
+                                "error": "Excess parts detected",
+                                "excess_parts": excess_parts,
+                            }
+                        ),
                         "application/json",
                     )
                 },
                 timeout=30,
             )
+        app.log(str(resp.status_code) + " " + resp.reason)
+        plate_context = data["payload"].get("plate_id") or data.get("id")
+        context_label = (
+            f"Plate {plate_context} completion upload"
+            if plate_context
+            else "Plate completion upload"
+        )
+        ensure_completion_response(session, resp, context_label)
+    except Exception:
+        if app:
+            app.log('helolololo')
+            app.log("Failed:\n{}".format(traceback.format_exc()))
+        send_job_error(session, traceback.format_exc())

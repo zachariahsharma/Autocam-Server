@@ -17,6 +17,10 @@ def setupTempDir():
 def downloadFiles(temp_dir, data, session):
     for part in data["payload"]["assignments"]:
         partsData = session.get(f"{BASE_URL}/api/parts/{part['part_id']}")
+        if partsData.status_code != 200:
+            app = adsk.core.Application.get()
+            app.log("Error fetching part data: " + str(partsData.json()))
+            continue
         app = adsk.core.Application.get()
         app.log(str(partsData.json()))
         with open(

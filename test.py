@@ -310,7 +310,7 @@ def run(_context):
         _app, _ui = fusion_app, ui
 
         api_key = _startup_key_gate(
-            ui, _read_api_key_from_env_file(_ENV_PATH), timeout_s=10
+            ui, _read_api_key_from_env_file(_ENV_PATH), timeout_s=1
         )
         if not api_key:
             ui.messageBox("Add-in not started (no API key set).")

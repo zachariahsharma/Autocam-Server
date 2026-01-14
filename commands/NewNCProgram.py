@@ -100,7 +100,10 @@ def export(name, machine):
             postParameters: adsk.cam.CAMParameters = newProgram.postParameters
             newProgram.updatePostParameters(postParameters)
             postOptions = adsk.cam.NCProgramPostProcessOptions.create()
-            newProgram.postProcess(postOptions)
+            try:
+                newProgram.postProcess(postOptions)
+            except:
+                continue
             app.log(f"Exported")
 
         for toolpath in releventToolpaths["Profile"]:

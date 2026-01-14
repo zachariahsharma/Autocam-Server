@@ -13,6 +13,7 @@ from ..commands.NewNCProgram import export
 from ..commands.DeleteToolpaths import DeleteToolpaths
 from ..commands.HandleTube import handleTube
 from ..config import BASE_URL, FINAL_PATH, INITIAL_PATH, TEMP_PATH, TOOLS_PATH
+from .job_status import ensure_completion_response, send_job_error
 from .templateTools import patch_cam_template_with_tool_libraries
 
 
@@ -421,6 +422,11 @@ def start(data, session):
                 timeout=30,
             )
         app.log(str(resp.status_code) + " " + resp.reason)
+        ensure_completion_response(
+            session,
+            resp,
+            f"Tube {box_tube_id} job {job_id} completion upload",
+        )
         doc.close(False)
         app.log(f"Closed document '{doc_name}'")
         try:
@@ -434,17 +440,7 @@ def start(data, session):
         except Exception:
             pass
 
-    except Exception as e:
+    except Exception:
         if app:
             app.log("Failed:\n{}".format(traceback.format_exc()))
-            session.post(
-                f"{BASE_URL}/api/jobs/complete",
-                files={
-                    "data": (
-                        None,
-                        json.dumps({"error": traceback.format_exc()}),
-                        "application/json",
-                    )
-                },
-                timeout=30,
-            )
+        send_job_error(session, traceback.format_exc())
