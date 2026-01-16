@@ -56,6 +56,8 @@ def AutoArrange(length, width) -> adsk.fusion.ArrangeFeature:
     planeEnv.quantity = adsk.core.ValueInput.createByString("-1")
     planeEnv.objectSpacing = adsk.core.ValueInput.createByString(".26 in")
     planeEnv.envelopeSpacing = adsk.core.ValueInput.createByString("0.5 in")
+    planeEnv.frameWidth = adsk.core.ValueInput.createByString("0.5 in")
+
     # Create the arrange feature.
     arrange = arrangeFeats.add(arrangeInput)
     topFace = 0

@@ -33,7 +33,7 @@ def screenshotEnvelope(
     length_cm = float(length_in) * 2.54
     width_cm = float(width_in) * 2.54
 
-    cx, cy, cz = 40.0 + length_cm / 2, 0.0 + width_cm / 2, 0.0
+    cx, cy, cz = 40.0 + length_cm / 2, -1.27 + width_cm / 2, 0.0
 
     out_w = 800
     if length_cm <= 0 or width_cm <= 0:

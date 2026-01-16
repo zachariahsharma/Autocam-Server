@@ -2,9 +2,11 @@ import json
 from typing import Optional
 
 import adsk.core
-import requests
+import sys
 
-from ..config import BASE_URL
+from ..config import BASE_URL, OVERRIDE_PATH
+sys.path.append(OVERRIDE_PATH)
+import requests
 
 
 def _log(message: str) -> None:

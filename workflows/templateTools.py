@@ -1,8 +1,9 @@
+import copy
 import json
 import os
 import re
 import xml.etree.ElementTree as ET
-from typing import Any, Optional
+from typing import Any, Callable, Iterable, Optional, Tuple
 
 
 _TEMPLATE_NS = "http://www.hsmworks.com/namespace/hsmworks/document/template"
@@ -64,7 +65,10 @@ def _material_aliases(material_name: str) -> list[str]:
     if not name:
         return aliases
 
-    if any(token in name for token in ("al", "alu", "alum", "6061", "aluminum", "aluminium")):
+    if any(
+        token in name
+        for token in ("al", "alu", "alum", "6061", "aluminum", "aluminium")
+    ):
         aliases.extend(["aluminium", "aluminum", "alum", "alu", "6061"])
     if "poly" in name or "pc" == name:
         aliases.extend(["polycarb", "polycarbonate", "poly", "pc"])
@@ -87,10 +91,7 @@ def _material_aliases(material_name: str) -> list[str]:
 
 
 def _choose_preset(tool: dict, material_name: Optional[str]) -> Optional[dict]:
-    presets = (
-        tool.get("start-values", {})
-        .get("presets", [])
-    )
+    presets = tool.get("start-values", {}).get("presets", [])
     if not isinstance(presets, list) or not presets:
         return None
 
@@ -107,6 +108,141 @@ def _choose_preset(tool: dict, material_name: Optional[str]) -> Optional[dict]:
             return preset
 
     return presets[0]
+
+
+def _tool_type_lower(tool: dict) -> str:
+    return str(tool.get("type") or "").lower()
+
+
+def _tool_diameter(tool: dict) -> Optional[float]:
+    geometry = tool.get("geometry")
+    if isinstance(geometry, dict):
+        diameter = _parse_number(geometry.get("DC"))
+        if diameter is not None:
+            return diameter
+
+    expressions = tool.get("expressions")
+    if isinstance(expressions, dict):
+        diameter = _parse_number(expressions.get("tool_diameter"))
+        if diameter is not None:
+            return diameter
+
+    return None
+
+
+def _tool_matches_keyword(tool: dict, keywords: Iterable[str]) -> bool:
+    tool_type = _tool_type_lower(tool)
+    return any(keyword in tool_type for keyword in keywords)
+
+
+def _select_tools(
+    indexes: list[dict], predicate: Callable[[dict], bool]
+) -> list[Tuple[dict, dict, Optional[float]]]:
+    selected: list[Tuple[dict, dict, Optional[float]]] = []
+    for idx in indexes:
+        tools = idx.get("tools")
+        if not isinstance(tools, list):
+            continue
+        for tool in tools:
+            if not isinstance(tool, dict):
+                continue
+            if not predicate(tool):
+                continue
+            diameter = _tool_diameter(tool)
+            selected.append((tool, idx, diameter))
+    return selected
+
+
+def _is_drill_tool(tool: dict) -> bool:
+    return _tool_matches_keyword(tool, ("drill",))
+
+
+def _is_endmill_tool(tool: dict) -> bool:
+    return _tool_matches_keyword(tool, ("end mill", "endmill"))
+
+
+def _tool_display_name(tool: dict) -> str:
+    description = (tool.get("description") or "").strip()
+    if description:
+        return description
+    diameter = _tool_diameter(tool)
+    if diameter is not None:
+        return f"{_fmt_num(diameter)} in"
+    return _tool_type_lower(tool).strip() or "tool"
+
+
+def _clone_template(template_elem: ET.Element) -> ET.Element:
+    return copy.deepcopy(template_elem)
+
+
+def _replace_template(
+    root: ET.Element, base: ET.Element, clones: list[ET.Element]
+) -> None:
+    if not clones:
+        return
+    children = list(root)
+    if base not in children:
+        return
+    index = children.index(base)
+    root.remove(base)
+    for clone in reversed(clones):
+        root.insert(index, clone)
+
+
+def _set_rest_machining(template_elem: ET.Element) -> None:
+    for parameter in template_elem.findall(_q("parameter")):
+        if parameter.get("name") == "useRestMachining":
+            parameter.set("expression", "true")
+
+
+def _unit_suffix_from_tool(tool_elem: Optional[ET.Element]) -> str:
+    if tool_elem is None:
+        return "in"
+    unit = (tool_elem.get("unit") or "").strip().lower()
+    if "mm" in unit:
+        return "mm"
+    if "inch" in unit:
+        return "in"
+    return "in"
+
+
+def _format_diameter_expression(value: float, suffix: str) -> str:
+    expr = _fmt_num(value)
+    if suffix:
+        expr = f"{expr}{suffix}"
+    return expr
+
+
+def _set_drill_diameter_range(template_elem: ET.Element, diameter: float) -> None:
+    if diameter is None:
+        return
+    tool_elem = template_elem.find(_q("tool"))
+    suffix = _unit_suffix_from_tool(tool_elem)
+    min_value = diameter - 0.003
+    max_value = diameter + 0.003
+    min_expr = _format_diameter_expression(min_value, suffix)
+    max_expr = _format_diameter_expression(max_value, suffix)
+    for parameter in template_elem.findall(_q("parameter")):
+        name = parameter.get("name")
+        if name == "holeDiameterMinimum":
+            parameter.set("expression", min_expr)
+        elif name == "holeDiameterMaximum":
+            parameter.set("expression", max_expr)
+
+
+def _find_template(
+    root: ET.Element,
+    *,
+    strategy: Optional[str] = None,
+    description: Optional[str] = None,
+) -> Optional[ET.Element]:
+    for template_elem in root.findall(f".//{_q('template')}"):
+        if strategy is not None and template_elem.get("strategy") != strategy:
+            continue
+        if description is not None and template_elem.get("description") != description:
+            continue
+        return template_elem
+    return None
 
 
 def load_tool_library_json(path: str) -> dict:
@@ -158,7 +294,9 @@ def _required_tool_signature(tool_elem: ET.Element) -> dict:
     }
 
 
-def _find_matching_tool(signature: dict, indexes: list[dict]) -> Optional[tuple[dict, dict]]:
+def _find_matching_tool(
+    signature: dict, indexes: list[dict]
+) -> Optional[tuple[dict, dict]]:
     desc = _normalize_desc(signature.get("description") or "")
     tool_type = signature.get("type") or ""
     diameter = signature.get("diameter")
@@ -177,7 +315,9 @@ def _find_matching_tool(signature: dict, indexes: list[dict]) -> Optional[tuple[
         for tool in candidates:
             tool_dia = _parse_number(tool.get("geometry", {}).get("DC"))
             if tool_dia is None:
-                tool_dia = _parse_number(tool.get("expressions", {}).get("tool_diameter"))
+                tool_dia = _parse_number(
+                    tool.get("expressions", {}).get("tool_diameter")
+                )
             if tool_dia is None:
                 continue
             if abs(tool_dia - float(diameter)) <= 1e-4:
@@ -188,7 +328,9 @@ def _find_matching_tool(signature: dict, indexes: list[dict]) -> Optional[tuple[
 
 def _strip_outer_quotes(value: str) -> str:
     value = (value or "").strip()
-    if len(value) >= 2 and ((value[0] == value[-1] == "'") or (value[0] == value[-1] == '"')):
+    if len(value) >= 2 and (
+        (value[0] == value[-1] == "'") or (value[0] == value[-1] == '"')
+    ):
         return value[1:-1]
     return value
 
@@ -351,13 +493,18 @@ def _apply_tool_to_elem(
         def mm_value(inches_value: float) -> float:
             return inches_value * 25.4 if tool_unit_is_inches else inches_value
 
-        add_param("tool_useFeedPerRevolution", _as_bool_str(preset.get("use-feed-per-revolution", False)))
+        add_param(
+            "tool_useFeedPerRevolution",
+            _as_bool_str(preset.get("use-feed-per-revolution", False)),
+        )
 
         coolant_expr = preset_exprs.get("tool_coolant") or f"'{coolant_mode}'"
         add_param("tool_coolant", coolant_mode, expression=coolant_expr)
 
         n = _parse_number(preset.get("n")) or 0
-        n_expr = preset_exprs.get("tool_spindleSpeed") or (f"{_fmt_num(n)} rpm" if n else None)
+        n_expr = preset_exprs.get("tool_spindleSpeed") or (
+            f"{_fmt_num(n)} rpm" if n else None
+        )
         add_param("tool_spindleSpeed", _fmt_num(n), expression=n_expr)
 
         n_ramp = _parse_number(preset.get("n_ramp"))
@@ -368,19 +515,34 @@ def _apply_tool_to_elem(
         if v_f is not None:
             v_f_expr = preset_exprs.get("tool_feedCutting")
             add_param("tool_feedCutting", _fmt_num(mm_value(v_f)), expression=v_f_expr)
-            add_param("tool_feedEntry", _fmt_num(mm_value(_parse_number(preset.get("v_f_leadIn")) or v_f)))
-            add_param("tool_feedExit", _fmt_num(mm_value(_parse_number(preset.get("v_f_leadOut")) or v_f)))
-            add_param("tool_feedTransition", _fmt_num(mm_value(_parse_number(preset.get("v_f_transition")) or v_f)))
+            add_param(
+                "tool_feedEntry",
+                _fmt_num(mm_value(_parse_number(preset.get("v_f_leadIn")) or v_f)),
+            )
+            add_param(
+                "tool_feedExit",
+                _fmt_num(mm_value(_parse_number(preset.get("v_f_leadOut")) or v_f)),
+            )
+            add_param(
+                "tool_feedTransition",
+                _fmt_num(mm_value(_parse_number(preset.get("v_f_transition")) or v_f)),
+            )
 
         v_f_plunge = _parse_number(preset.get("v_f_plunge"))
         if v_f_plunge is not None:
             v_f_plunge_expr = preset_exprs.get("tool_feedPlunge")
-            add_param("tool_feedPlunge", _fmt_num(mm_value(v_f_plunge)), expression=v_f_plunge_expr)
+            add_param(
+                "tool_feedPlunge",
+                _fmt_num(mm_value(v_f_plunge)),
+                expression=v_f_plunge_expr,
+            )
 
         v_f_ramp = _parse_number(preset.get("v_f_ramp"))
         if v_f_ramp is not None:
             v_f_ramp_expr = preset_exprs.get("tool_feedRamp")
-            add_param("tool_feedRamp", _fmt_num(mm_value(v_f_ramp)), expression=v_f_ramp_expr)
+            add_param(
+                "tool_feedRamp", _fmt_num(mm_value(v_f_ramp)), expression=v_f_ramp_expr
+            )
 
         v_f_retract = _parse_number(preset.get("v_f_retract"))
         if v_f_retract is not None:
@@ -388,55 +550,56 @@ def _apply_tool_to_elem(
 
         material_info = preset.get("material", {})
         if isinstance(material_info, dict):
-            add_param("tool_presetMaterialCategory", str(material_info.get("category") or "all"))
+            add_param(
+                "tool_presetMaterialCategory",
+                str(material_info.get("category") or "all"),
+            )
             add_param("tool_presetMaterialQuery", str(material_info.get("query") or ""))
 
         stepdown = _parse_number(preset.get("stepdown"))
         if stepdown is not None:
             stepdown_expr = preset_exprs.get("tool_stepdown")
-            add_param("tool_stepdown", _fmt_num(mm_value(stepdown)), expression=stepdown_expr)
+            add_param(
+                "tool_stepdown", _fmt_num(mm_value(stepdown)), expression=stepdown_expr
+            )
 
         stepover = _parse_number(preset.get("stepover"))
         if stepover is not None:
             stepover_expr = preset_exprs.get("tool_stepover")
-            add_param("tool_stepover", _fmt_num(mm_value(stepover)), expression=stepover_expr)
+            add_param(
+                "tool_stepover", _fmt_num(mm_value(stepover)), expression=stepover_expr
+            )
 
         ramp_angle_deg = _parse_number(preset.get("ramp-angle"))
         if ramp_angle_deg is not None:
             ramp_angle_expr = preset_exprs.get("tool_rampAngle")
-            add_param("tool_rampAngle", _fmt_num(float(ramp_angle_deg) / 5.0), expression=ramp_angle_expr)
+            add_param(
+                "tool_rampAngle",
+                _fmt_num(float(ramp_angle_deg) / 5.0),
+                expression=ramp_angle_expr,
+            )
+
+    if template_elem.get("strategy") == "drill":
+        diameter = _tool_diameter(tool)
+        if diameter is not None:
+            _set_drill_diameter_range(template_elem, diameter)
 
 
 def _find_largest_endmill(indexes: list[dict]) -> Optional[tuple[dict, dict]]:
     """Find the largest endmill (by diameter) from all tool indexes."""
-    largest_tool = None
-    largest_diameter = 0.0
-    largest_idx = None
-
-    for idx in indexes:
-        tools = idx.get("tools", [])
-        for tool in tools:
-            if not isinstance(tool, dict):
-                continue
-            tool_type = str(tool.get("type") or "").lower()
-            # Check if it's an endmill type (flat end mill, ball end mill, etc.)
-            if "end mill" not in tool_type and "endmill" not in tool_type:
-                continue
-
-            # Get diameter
-            diameter = _parse_number(tool.get("geometry", {}).get("DC"))
-            if diameter is None:
-                diameter = _parse_number(tool.get("expressions", {}).get("tool_diameter"))
-            if diameter is None:
-                continue
-
-            if diameter > largest_diameter:
-                largest_diameter = diameter
-                largest_tool = tool
-                largest_idx = idx
-
-    if largest_tool and largest_idx:
-        return largest_tool, largest_idx
+    candidates = _select_tools(indexes, _is_endmill_tool)
+    best_tool = None
+    best_idx = None
+    best_diameter = -1.0
+    for tool, idx, diameter in candidates:
+        if diameter is None:
+            continue
+        if best_tool is None or diameter > best_diameter:
+            best_diameter = diameter
+            best_tool = tool
+            best_idx = idx
+    if best_tool and best_idx:
+        return best_tool, best_idx
     return None
 
 
@@ -461,27 +624,110 @@ def patch_cam_template_with_tool_libraries(
 
     replaced = 0
     missing: list[dict] = []
+    handled_templates: set[int] = set()
 
-    # Find the largest endmill for the Suppress operation
+    drill_candidates = _select_tools(indexes, _is_drill_tool)
+    endmill_candidates = _select_tools(indexes, _is_endmill_tool)
     largest_endmill = _find_largest_endmill(indexes)
 
-    for template_elem in root.findall(f".//{_q('template')}"):
-        tool_elem = template_elem.find(_q("tool"))
-        if tool_elem is None:
-            continue
+    drill_template = _find_template(root, strategy="drill")
+    pocket_template = _find_template(root, strategy="pocket_new")
+    suppress_template = _find_template(root, description="Suppress")
+    contour_templates = [
+        template_elem
+        for template_elem in root.findall(f".//{_q('template')}")
+        if template_elem.get("strategy") == "contour2d"
+    ]
+    contour_templates = [
+        template_elem
+        for template_elem in contour_templates
+        if template_elem is not suppress_template
+    ]
 
-        # Check if this is the Suppress operation - use largest endmill
-        template_desc = template_elem.get("description", "")
-        if template_desc == "Suppress" and largest_endmill:
-            tool, idx = largest_endmill
+    if drill_template and drill_candidates:
+        sorted_drills = sorted(
+            drill_candidates, key=lambda entry: (entry[2] or 0.0), reverse=True
+        )
+        clones: list[ET.Element] = []
+        for tool, idx, diameter in sorted_drills:
+            clone = _clone_template(drill_template)
+            tool_elem = clone.find(_q("tool"))
+            if tool_elem is None:
+                continue
             _apply_tool_to_elem(
-                template_elem,
+                clone,
                 tool_elem,
                 tool,
                 tool_library_version=idx.get("version"),
                 material_name=material_name,
             )
+            clone.set("description", _tool_display_name(tool))
+            clones.append(clone)
+            handled_templates.add(id(clone))
+        if clones:
+            _replace_template(root, drill_template, clones)
+            replaced += len(clones)
+
+    if pocket_template and endmill_candidates:
+        sorted_endmills = sorted(
+            endmill_candidates, key=lambda entry: (entry[2] or 0.0), reverse=True
+        )
+        clones: list[ET.Element] = []
+        for index, (tool, idx, _) in enumerate(sorted_endmills):
+            clone = _clone_template(pocket_template)
+            tool_elem = clone.find(_q("tool"))
+            if tool_elem is None:
+                continue
+            _apply_tool_to_elem(
+                clone,
+                tool_elem,
+                tool,
+                tool_library_version=idx.get("version"),
+                material_name=material_name,
+            )
+            _set_rest_machining(clone)
+            clone.set("description", f"Pocket {index + 1} ({_tool_display_name(tool)})")
+            clones.append(clone)
+            handled_templates.add(id(clone))
+        if clones:
+            _replace_template(root, pocket_template, clones)
+            replaced += len(clones)
+
+    if suppress_template and largest_endmill:
+        tool, idx = largest_endmill
+        tool_elem = suppress_template.find(_q("tool"))
+        if tool_elem is not None:
+            _apply_tool_to_elem(
+                suppress_template,
+                tool_elem,
+                tool,
+                tool_library_version=idx.get("version"),
+                material_name=material_name,
+            )
+            handled_templates.add(id(suppress_template))
             replaced += 1
+
+    if largest_endmill:
+        tool, idx = largest_endmill
+        for contour_template in contour_templates:
+            tool_elem = contour_template.find(_q("tool"))
+            if tool_elem is None:
+                continue
+            _apply_tool_to_elem(
+                contour_template,
+                tool_elem,
+                tool,
+                tool_library_version=idx.get("version"),
+                material_name=material_name,
+            )
+            handled_templates.add(id(contour_template))
+            replaced += 1
+
+    for template_elem in root.findall(f".//{_q('template')}"):
+        if id(template_elem) in handled_templates:
+            continue
+        tool_elem = template_elem.find(_q("tool"))
+        if tool_elem is None:
             continue
 
         signature = _required_tool_signature(tool_elem)
@@ -498,6 +744,7 @@ def patch_cam_template_with_tool_libraries(
             tool_library_version=idx.get("version"),
             material_name=material_name,
         )
+        handled_templates.add(id(template_elem))
         replaced += 1
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
