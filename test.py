@@ -258,7 +258,6 @@ def _startup_key_gate(
 
 def handleServer(temp_dir: str, stop_event: threading.Event):
     while not stop_event.is_set():
-        # for i in range(1):
         try:
             time.sleep(5)
             if _job_processing.is_set() or not _job_queue.empty():
@@ -268,7 +267,6 @@ def handleServer(temp_dir: str, stop_event: threading.Event):
                 raise RuntimeError("HTTP session not initialized.")
             response = session.post(
                 f"{BASE_URL}/api/jobs/request",
-                # json={"kind": "plate:cam"},
                 timeout=30,
             )
             if stop_event.is_set():
@@ -288,7 +286,7 @@ def handleServer(temp_dir: str, stop_event: threading.Event):
                     setupTemp.downloadFiles(temp_dir, data, session)
             except Exception:
                 _queue_log(
-                    "Error downloading files:\n{}".format(traceback.format_exc())
+                    f"Error downloading files:\n{traceback.format_exc()}"
                 )
 
             if stop_event.is_set():
@@ -296,8 +294,14 @@ def handleServer(temp_dir: str, stop_event: threading.Event):
             _job_queue.put(data)
             _fire_job_queue_event()
         except Exception:
-            _queue_log("Error handling job:\n{}".format(traceback.format_exc()))
-            stop_event.wait(1)
+            try:
+                _queue_log(f"Error handling job:\n{traceback.format_exc()}")
+            except Exception:
+                pass
+            try:
+                stop_event.wait(1)
+            except Exception:
+                time.sleep(1)
 
 
 def run(_context):
