@@ -11,7 +11,7 @@
 
   <doubleSided value="false"/>
 
-  <template description="256Drill" isFallback="0" strategy="drill" toolPresetId="{880e3dc1-2491-433b-b060-94deae4f4585}" unit="inches" version="175">
+  <template description="256Drill" isFallback="0" strategy="drill" toolPresetId="{880e3dc1-2491-433b-b060-94deae4f4585}" unit="millimeters" version="175">
     <tool guid="8c550ddf-8e4f-49ee-8c65-88dd15ff4431" tool-library-version="36" type="drill" unit="inches" version="1.5">
       <expressions>
         <expression parameterKey="tool_bodyLength" value="1.5 in"/>
@@ -267,7 +267,7 @@
     <parameter expression="'top'" name="clearanceHeightFromHighest_checkFixture"/>
     <parameter expression="'bottom'" name="clearanceHeightFromLowest_checkFixture"/>
     <parameter expression="0.4in" name="clearanceHeight_offset"/>
-    <parameter expression="15.6972" name="clearanceHeight_value"/>
+    <parameter expression="15.24" name="clearanceHeight_value"/>
     <parameter expression="'from retract height'" name="clearanceAreaHeight_mode"/>
     <parameter expression="false" name="clearanceAreaHeight_ref"/>
     <parameter expression="'top'" name="clearanceAreaHeightFromHighest_checkStock"/>
@@ -277,7 +277,7 @@
     <parameter expression="'top'" name="clearanceAreaHeightFromHighest_checkFixture"/>
     <parameter expression="'bottom'" name="clearanceAreaHeightFromLowest_checkFixture"/>
     <parameter expression="0.4in" name="clearanceAreaHeight_offset"/>
-    <parameter expression="15.24" name="clearanceAreaHeight_value"/>
+    <parameter expression="15." name="clearanceAreaHeight_value"/>
     <parameter expression="'from outermost of'" name="clearanceAreaCylinderRadius_mode"/>
     <parameter expression="false" name="clearanceAreaCylinderRadius_ref"/>
     <parameter expression="'outer diameter'" name="clearanceAreaCylinderRadiusFromOutermost_checkStock"/>
@@ -285,7 +285,7 @@
     <parameter expression="'outer diameter'" name="clearanceAreaCylinderRadiusFromOutermost_checkFixture"/>
     <parameter expression="0.4in" name="clearanceAreaCylinderRadius_offset"/>
     <parameter expression="clearanceAreaCylinderRadius_mode == 'radius' ? clearanceAreaCylinderRadius_value : clearanceAreaCylinderRadius_value * 2" name="clearanceAreaCylinderRadius_direct"/>
-    <parameter expression="10.16" name="clearanceAreaCylinderRadius_value"/>
+    <parameter expression="10." name="clearanceAreaCylinderRadius_value"/>
     <parameter expression="'from outermost of'" name="clearanceAreaSphereRadius_mode"/>
     <parameter expression="false" name="clearanceAreaSphereRadius_ref"/>
     <parameter expression="'outer diameter'" name="clearanceAreaSphereRadiusFromOutermost_checkStock"/>
@@ -293,20 +293,20 @@
     <parameter expression="'outer diameter'" name="clearanceAreaSphereRadiusFromOutermost_checkFixture"/>
     <parameter expression="0.4in" name="clearanceAreaSphereRadius_offset"/>
     <parameter expression="clearanceAreaSphereRadius_mode == 'radius' ? clearanceAreaSphereRadius_value : clearanceAreaSphereRadius_value * 2" name="clearanceAreaSphereRadius_direct"/>
-    <parameter expression="10.16" name="clearanceAreaSphereRadius_value"/>
+    <parameter expression="10." name="clearanceAreaSphereRadius_value"/>
     <parameter expression="'from stock box'" name="clearanceAreaCuboid_mode"/>
     <parameter expression="isDrillingRefTrimming ? drillingReference.symmetricalOffsets : true" name="symmetricalOffsets"/>
-    <parameter expression="10.16" name="clearanceAreaCuboidPosZ_value"/>
+    <parameter expression="10." name="clearanceAreaCuboidPosZ_value"/>
     <parameter expression="0.4in" name="clearanceAreaCuboidPosZ_offset"/>
-    <parameter expression="16.05280000000011" name="clearanceAreaCuboidNegZ_value"/>
+    <parameter expression="14.175" name="clearanceAreaCuboidNegZ_value"/>
     <parameter expression="0.4in" name="clearanceAreaCuboidNegZ_offset"/>
-    <parameter expression="1037.73226026743919" name="clearanceAreaCuboidPosY_value"/>
+    <parameter expression="221.55000000000001" name="clearanceAreaCuboidPosY_value"/>
     <parameter expression="0.4in" name="clearanceAreaCuboidPosY_offset"/>
-    <parameter expression="10.16" name="clearanceAreaCuboidNegY_value"/>
+    <parameter expression="10." name="clearanceAreaCuboidNegY_value"/>
     <parameter expression="0.4in" name="clearanceAreaCuboidNegY_offset"/>
-    <parameter expression="565.33349415165969" name="clearanceAreaCuboidPosX_value"/>
+    <parameter expression="356.42400756835946" name="clearanceAreaCuboidPosX_value"/>
     <parameter expression="0.4in" name="clearanceAreaCuboidPosX_offset"/>
-    <parameter expression="10.16" name="clearanceAreaCuboidNegX_value"/>
+    <parameter expression="10." name="clearanceAreaCuboidNegX_value"/>
     <parameter expression="0.4in" name="clearanceAreaCuboidNegX_offset"/>
     <parameter expression="'from highest of'" name="retractHeight_mode"/>
     <parameter expression="false" name="retractHeight_ref"/>
@@ -317,7 +317,7 @@
     <parameter expression="'top'" name="retractHeightFromHighest_checkFixture"/>
     <parameter expression="'bottom'" name="retractHeightFromLowest_checkFixture"/>
     <parameter expression="0.2in" name="retractHeight_offset"/>
-    <parameter expression="5.5372" name="retractHeight_value"/>
+    <parameter expression="5.08" name="retractHeight_value"/>
     <parameter expression="'plane'" name="retractAreaType"/>
     <parameter expression="'from highest of'" name="retractAreaHeight_mode"/>
     <parameter expression="false" name="retractAreaHeight_ref"/>
@@ -328,7 +328,7 @@
     <parameter expression="'top'" name="retractAreaHeightFromHighest_checkFixture"/>
     <parameter expression="'bottom'" name="retractAreaHeightFromLowest_checkFixture"/>
     <parameter expression="0.2in" name="retractAreaHeight_offset"/>
-    <parameter expression="5.08" name="retractAreaHeight_value"/>
+    <parameter expression="5." name="retractAreaHeight_value"/>
     <parameter expression="'from outermost of'" name="retractAreaCylinderRadius_mode"/>
     <parameter expression="false" name="retractAreaCylinderRadius_ref"/>
     <parameter expression="'outer diameter'" name="retractAreaCylinderRadiusFromOutermost_checkStock"/>
@@ -336,7 +336,7 @@
     <parameter expression="'outer diameter'" name="retractAreaCylinderRadiusFromOutermost_checkFixture"/>
     <parameter expression="0.2in" name="retractAreaCylinderRadius_offset"/>
     <parameter expression="retractAreaCylinderRadius_mode == 'radius' ? retractAreaCylinderRadius_value : retractAreaCylinderRadius_value * 2" name="retractAreaCylinderRadius_direct"/>
-    <parameter expression="5.08" name="retractAreaCylinderRadius_value"/>
+    <parameter expression="5." name="retractAreaCylinderRadius_value"/>
     <parameter expression="'from outermost of'" name="retractAreaSphereRadius_mode"/>
     <parameter expression="false" name="retractAreaSphereRadius_ref"/>
     <parameter expression="'outer diameter'" name="retractAreaSphereRadiusFromOutermost_checkStock"/>
@@ -344,7 +344,7 @@
     <parameter expression="'outer diameter'" name="retractAreaSphereRadiusFromOutermost_checkFixture"/>
     <parameter expression="0.2in" name="retractAreaSphereRadius_offset"/>
     <parameter expression="retractAreaSphereRadius_mode == 'radius' ? retractAreaSphereRadius_value : retractAreaSphereRadius_value * 2" name="retractAreaSphereRadius_direct"/>
-    <parameter expression="5.08" name="retractAreaSphereRadius_value"/>
+    <parameter expression="5." name="retractAreaSphereRadius_value"/>
     <parameter expression="'from top'" name="feedHeight_mode"/>
     <parameter expression="false" name="feedHeight_ref"/>
     <parameter expression="'ignore'" name="feedHeightFromHighest_checkStock"/>
@@ -378,7 +378,7 @@
     <parameter expression="0in" name="toChamferWidth"/>
     <parameter expression="tool_diameter" name="toChamferDiameter"/>
     <parameter expression="true" name="drillTipThroughBottom"/>
-    <parameter expression="0.0625 in" name="breakThroughDepth"/>
+    <parameter expression="0mm" name="breakThroughDepth"/>
     <parameter expression="'chip-breaking'" name="cycleType"/>
     <parameter expression="false" name="cycle_isSpotDrill"/>
     <parameter expression="'right'" name="cycle_tappingDirection"/>
@@ -439,7 +439,7 @@
     <parameter expression="'from stock top'" name="connectionMoveClearanceAreaHeight_mode"/>
     <parameter expression="false" name="connectionMoveClearanceAreaHeight_ref"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaHeight_offset"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaHeight_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaHeight_value"/>
     <parameter expression="'from stock od'" name="connectionMoveClearanceAreaCylinderRadius_mode"/>
     <parameter expression="false" name="connectionMoveClearanceAreaCylinderRadius_ref"/>
     <parameter expression="'outer diameter'" name="connectionMoveClearanceAreaCylinderRadiusFromOutermost_checkStock"/>
@@ -447,7 +447,7 @@
     <parameter expression="'outer diameter'" name="connectionMoveClearanceAreaCylinderRadiusFromOutermost_checkFixture"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCylinderRadius_offset"/>
     <parameter expression="connectionMoveClearanceAreaCylinderRadius_mode == 'radius' ? connectionMoveClearanceAreaCylinderRadius_value : connectionMoveClearanceAreaCylinderRadius_value * 2" name="connectionMoveClearanceAreaCylinderRadius_direct"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaCylinderRadius_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaCylinderRadius_value"/>
     <parameter expression="'from stock od'" name="connectionMoveClearanceAreaSphereRadius_mode"/>
     <parameter expression="false" name="connectionMoveClearanceAreaSphereRadius_ref"/>
     <parameter expression="'outer diameter'" name="connectionMoveClearanceAreaSphereRadiusFromOutermost_checkStock"/>
@@ -455,20 +455,20 @@
     <parameter expression="'outer diameter'" name="connectionMoveClearanceAreaSphereRadiusFromOutermost_checkFixture"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaSphereRadius_offset"/>
     <parameter expression="connectionMoveClearanceAreaSphereRadius_mode == 'radius' ? connectionMoveClearanceAreaSphereRadius_value : connectionMoveClearanceAreaSphereRadius_value * 2" name="connectionMoveClearanceAreaSphereRadius_direct"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaSphereRadius_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaSphereRadius_value"/>
     <parameter expression="'from stock box'" name="connectionMoveClearanceAreaCuboid_mode"/>
     <parameter expression="true" name="connectionMoveClearanceAreaCuboid_symmetricalOffsets"/>
-    <parameter expression="565.33349415165969" name="connectionMoveClearanceAreaCuboidPosX_value"/>
+    <parameter expression="356.42400756835946" name="connectionMoveClearanceAreaCuboidPosX_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidPosX_offset"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaCuboidNegX_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaCuboidNegX_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidNegX_offset"/>
-    <parameter expression="1037.73226026743919" name="connectionMoveClearanceAreaCuboidPosY_value"/>
+    <parameter expression="221.55000000000001" name="connectionMoveClearanceAreaCuboidPosY_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidPosY_offset"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaCuboidNegY_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaCuboidNegY_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidNegY_offset"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaCuboidPosZ_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaCuboidPosZ_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidPosZ_offset"/>
-    <parameter expression="16.05280000000011" name="connectionMoveClearanceAreaCuboidNegZ_value"/>
+    <parameter expression="14.175" name="connectionMoveClearanceAreaCuboidNegZ_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidNegZ_offset"/>
     <parameter expression="false" name="use_tool_stepdown"/>
     <parameter expression="tool_fluteLength * 0.9" name="tool_stepdown"/>
@@ -480,7 +480,7 @@
     <parameter expression="false" name="associatedView"/>
   </template>
 
-  <template description="Suppress" isFallback="0" strategy="contour2d" toolPresetId="{e6f3e5a6-2ce5-4a39-ae52-699d48a48949}" unit="inches" version="175">
+  <template description="Suppress" isFallback="0" strategy="contour2d" toolPresetId="{e6f3e5a6-2ce5-4a39-ae52-699d48a48949}" unit="millimeters" version="175">
     <tool guid="3a7cb7a4-335c-443d-8253-06f61041d9e6" tool-library-version="36" type="flat end mill" unit="inches" version="1.5">
       <description>6061Al Onsrud End Mill (0.25")</description>
       <expressions>
@@ -681,7 +681,7 @@
     <parameter expression="'top'" name="clearanceHeightFromHighest_checkFixture"/>
     <parameter expression="'bottom'" name="clearanceHeightFromLowest_checkFixture"/>
     <parameter expression="10mm" name="clearanceHeight_offset"/>
-    <parameter expression="15.4572" name="clearanceHeight_value"/>
+    <parameter expression="15." name="clearanceHeight_value"/>
     <parameter expression="'from highest of'" name="retractHeight_mode"/>
     <parameter expression="false" name="retractHeight_ref"/>
     <parameter expression="'top'" name="retractHeightFromHighest_checkStock"/>
@@ -691,7 +691,7 @@
     <parameter expression="'top'" name="retractHeightFromHighest_checkFixture"/>
     <parameter expression="'bottom'" name="retractHeightFromLowest_checkFixture"/>
     <parameter expression="5mm" name="retractHeight_offset"/>
-    <parameter expression="5.4572" name="retractHeight_value"/>
+    <parameter expression="5." name="retractHeight_value"/>
     <parameter expression="'from top'" name="feedHeight_mode"/>
     <parameter expression="false" name="feedHeight_ref"/>
     <parameter expression="'ignore'" name="feedHeightFromHighest_checkStock"/>
@@ -721,7 +721,7 @@
     <parameter expression="'ignore'" name="bottomHeightFromHighest_checkFixture"/>
     <parameter expression="'ignore'" name="bottomHeightFromLowest_checkFixture"/>
     <parameter expression="0mm" name="bottomHeight_offset"/>
-    <parameter expression="-5.89280000000011" name="bottomHeight_value"/>
+    <parameter expression="-4.175" name="bottomHeight_value"/>
     <parameter expression="0.01mm" name="tolerance"/>
     <parameter expression="tolerance * 0.5" name="contourTolerance"/>
     <parameter expression="tolerance" name="calculationTolerance"/>
@@ -832,7 +832,7 @@
     <parameter expression="'from stock top'" name="connectionMoveClearanceAreaHeight_mode"/>
     <parameter expression="false" name="connectionMoveClearanceAreaHeight_ref"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaHeight_offset"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaHeight_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaHeight_value"/>
     <parameter expression="'from stock od'" name="connectionMoveClearanceAreaCylinderRadius_mode"/>
     <parameter expression="false" name="connectionMoveClearanceAreaCylinderRadius_ref"/>
     <parameter expression="'outer diameter'" name="connectionMoveClearanceAreaCylinderRadiusFromOutermost_checkStock"/>
@@ -840,7 +840,7 @@
     <parameter expression="'outer diameter'" name="connectionMoveClearanceAreaCylinderRadiusFromOutermost_checkFixture"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCylinderRadius_offset"/>
     <parameter expression="connectionMoveClearanceAreaCylinderRadius_mode == 'radius' ? connectionMoveClearanceAreaCylinderRadius_value : connectionMoveClearanceAreaCylinderRadius_value * 2" name="connectionMoveClearanceAreaCylinderRadius_direct"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaCylinderRadius_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaCylinderRadius_value"/>
     <parameter expression="'from stock od'" name="connectionMoveClearanceAreaSphereRadius_mode"/>
     <parameter expression="false" name="connectionMoveClearanceAreaSphereRadius_ref"/>
     <parameter expression="'outer diameter'" name="connectionMoveClearanceAreaSphereRadiusFromOutermost_checkStock"/>
@@ -848,20 +848,20 @@
     <parameter expression="'outer diameter'" name="connectionMoveClearanceAreaSphereRadiusFromOutermost_checkFixture"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaSphereRadius_offset"/>
     <parameter expression="connectionMoveClearanceAreaSphereRadius_mode == 'radius' ? connectionMoveClearanceAreaSphereRadius_value : connectionMoveClearanceAreaSphereRadius_value * 2" name="connectionMoveClearanceAreaSphereRadius_direct"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaSphereRadius_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaSphereRadius_value"/>
     <parameter expression="'from stock box'" name="connectionMoveClearanceAreaCuboid_mode"/>
     <parameter expression="true" name="connectionMoveClearanceAreaCuboid_symmetricalOffsets"/>
-    <parameter expression="565.33349415165969" name="connectionMoveClearanceAreaCuboidPosX_value"/>
+    <parameter expression="356.42400756835946" name="connectionMoveClearanceAreaCuboidPosX_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidPosX_offset"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaCuboidNegX_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaCuboidNegX_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidNegX_offset"/>
-    <parameter expression="1037.73226026743919" name="connectionMoveClearanceAreaCuboidPosY_value"/>
+    <parameter expression="221.55000000000001" name="connectionMoveClearanceAreaCuboidPosY_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidPosY_offset"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaCuboidNegY_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaCuboidNegY_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidNegY_offset"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaCuboidPosZ_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaCuboidPosZ_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidPosZ_offset"/>
-    <parameter expression="16.05280000000011" name="connectionMoveClearanceAreaCuboidNegZ_value"/>
+    <parameter expression="14.175" name="connectionMoveClearanceAreaCuboidNegZ_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidNegZ_offset"/>
     <parameter expression="true" name="use_tool_stepdown"/>
     <parameter expression="0.1in" name="tool_stepdown"/>
@@ -874,7 +874,7 @@
     <parameter expression="false" name="associatedView"/>
   </template>
 
-  <template description="Pocket1 (2)" isFallback="0" strategy="pocket_new" toolPresetId="{e6f3e5a6-2ce5-4a39-ae52-699d48a48949}" unit="inches" version="175">
+  <template description="Pocket1 (2)" isFallback="0" strategy="pocket_new" toolPresetId="{e6f3e5a6-2ce5-4a39-ae52-699d48a48949}" unit="millimeters" version="175">
     <tool guid="3a7cb7a4-335c-443d-8253-06f61041d9e6" tool-library-version="36" type="flat end mill" unit="inches" version="1.5">
       <description>6061Al Onsrud End Mill (0.25")</description>
       <expressions>
@@ -1142,7 +1142,7 @@
     <parameter expression="'ignore'" name="bottomHeightFromHighest_checkFixture"/>
     <parameter expression="'ignore'" name="bottomHeightFromLowest_checkFixture"/>
     <parameter expression="0.0 in" name="bottomHeight_offset"/>
-    <parameter expression="-5.89280000000011" name="bottomHeight_value"/>
+    <parameter expression="-4.175" name="bottomHeight_value"/>
     <parameter expression="0.004in" name="tolerance"/>
     <parameter expression="tolerance * 0.5" name="contourTolerance"/>
     <parameter expression="tolerance * 0.5" name="surfaceTriangulationTolerance"/>
@@ -1220,7 +1220,7 @@
     <parameter expression="'from stock top'" name="connectionMoveClearanceAreaHeight_mode"/>
     <parameter expression="false" name="connectionMoveClearanceAreaHeight_ref"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaHeight_offset"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaHeight_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaHeight_value"/>
     <parameter expression="'from stock od'" name="connectionMoveClearanceAreaCylinderRadius_mode"/>
     <parameter expression="false" name="connectionMoveClearanceAreaCylinderRadius_ref"/>
     <parameter expression="'outer diameter'" name="connectionMoveClearanceAreaCylinderRadiusFromOutermost_checkStock"/>
@@ -1228,7 +1228,7 @@
     <parameter expression="'outer diameter'" name="connectionMoveClearanceAreaCylinderRadiusFromOutermost_checkFixture"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCylinderRadius_offset"/>
     <parameter expression="connectionMoveClearanceAreaCylinderRadius_mode == 'radius' ? connectionMoveClearanceAreaCylinderRadius_value : connectionMoveClearanceAreaCylinderRadius_value * 2" name="connectionMoveClearanceAreaCylinderRadius_direct"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaCylinderRadius_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaCylinderRadius_value"/>
     <parameter expression="'from stock od'" name="connectionMoveClearanceAreaSphereRadius_mode"/>
     <parameter expression="false" name="connectionMoveClearanceAreaSphereRadius_ref"/>
     <parameter expression="'outer diameter'" name="connectionMoveClearanceAreaSphereRadiusFromOutermost_checkStock"/>
@@ -1236,20 +1236,20 @@
     <parameter expression="'outer diameter'" name="connectionMoveClearanceAreaSphereRadiusFromOutermost_checkFixture"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaSphereRadius_offset"/>
     <parameter expression="connectionMoveClearanceAreaSphereRadius_mode == 'radius' ? connectionMoveClearanceAreaSphereRadius_value : connectionMoveClearanceAreaSphereRadius_value * 2" name="connectionMoveClearanceAreaSphereRadius_direct"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaSphereRadius_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaSphereRadius_value"/>
     <parameter expression="'from stock box'" name="connectionMoveClearanceAreaCuboid_mode"/>
     <parameter expression="true" name="connectionMoveClearanceAreaCuboid_symmetricalOffsets"/>
-    <parameter expression="565.33349415165969" name="connectionMoveClearanceAreaCuboidPosX_value"/>
+    <parameter expression="356.42400756835946" name="connectionMoveClearanceAreaCuboidPosX_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidPosX_offset"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaCuboidNegX_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaCuboidNegX_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidNegX_offset"/>
-    <parameter expression="1037.73226026743919" name="connectionMoveClearanceAreaCuboidPosY_value"/>
+    <parameter expression="221.55000000000001" name="connectionMoveClearanceAreaCuboidPosY_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidPosY_offset"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaCuboidNegY_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaCuboidNegY_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidNegY_offset"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaCuboidPosZ_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaCuboidPosZ_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidPosZ_offset"/>
-    <parameter expression="16.05280000000011" name="connectionMoveClearanceAreaCuboidNegZ_value"/>
+    <parameter expression="14.175" name="connectionMoveClearanceAreaCuboidNegZ_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidNegZ_offset"/>
     <parameter expression="true" name="use_tool_stepdown"/>
     <parameter expression="0.1in" name="tool_stepdown"/>
@@ -1262,7 +1262,7 @@
     <parameter expression="false" name="associatedView"/>
   </template>
 
-  <template description="2D Contour2 (9)" isFallback="0" strategy="contour2d" toolPresetId="{e6f3e5a6-2ce5-4a39-ae52-699d48a48949}" unit="inches" version="175">
+  <template description="2D Contour2 (9)" isFallback="0" strategy="contour2d" toolPresetId="{e6f3e5a6-2ce5-4a39-ae52-699d48a48949}" unit="millimeters" version="175">
     <tool guid="3a7cb7a4-335c-443d-8253-06f61041d9e6" tool-library-version="36" type="flat end mill" unit="inches" version="1.5">
       <description>6061Al Onsrud End Mill (0.25")</description>
       <expressions>
@@ -1463,7 +1463,7 @@
     <parameter expression="'top'" name="clearanceHeightFromHighest_checkFixture"/>
     <parameter expression="'bottom'" name="clearanceHeightFromLowest_checkFixture"/>
     <parameter expression="10mm" name="clearanceHeight_offset"/>
-    <parameter expression="15.4572" name="clearanceHeight_value"/>
+    <parameter expression="15." name="clearanceHeight_value"/>
     <parameter expression="'from highest of'" name="retractHeight_mode"/>
     <parameter expression="false" name="retractHeight_ref"/>
     <parameter expression="'top'" name="retractHeightFromHighest_checkStock"/>
@@ -1473,7 +1473,7 @@
     <parameter expression="'top'" name="retractHeightFromHighest_checkFixture"/>
     <parameter expression="'bottom'" name="retractHeightFromLowest_checkFixture"/>
     <parameter expression="5mm" name="retractHeight_offset"/>
-    <parameter expression="5.4572" name="retractHeight_value"/>
+    <parameter expression="5." name="retractHeight_value"/>
     <parameter expression="'from top'" name="feedHeight_mode"/>
     <parameter expression="false" name="feedHeight_ref"/>
     <parameter expression="'ignore'" name="feedHeightFromHighest_checkStock"/>
@@ -1503,7 +1503,7 @@
     <parameter expression="'ignore'" name="bottomHeightFromHighest_checkFixture"/>
     <parameter expression="'ignore'" name="bottomHeightFromLowest_checkFixture"/>
     <parameter expression="0mm" name="bottomHeight_offset"/>
-    <parameter expression="-5.89280000000011" name="bottomHeight_value"/>
+    <parameter expression="-4.175" name="bottomHeight_value"/>
     <parameter expression="0.01mm" name="tolerance"/>
     <parameter expression="tolerance * 0.5" name="contourTolerance"/>
     <parameter expression="tolerance" name="calculationTolerance"/>
@@ -1614,7 +1614,7 @@
     <parameter expression="'from stock top'" name="connectionMoveClearanceAreaHeight_mode"/>
     <parameter expression="false" name="connectionMoveClearanceAreaHeight_ref"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaHeight_offset"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaHeight_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaHeight_value"/>
     <parameter expression="'from stock od'" name="connectionMoveClearanceAreaCylinderRadius_mode"/>
     <parameter expression="false" name="connectionMoveClearanceAreaCylinderRadius_ref"/>
     <parameter expression="'outer diameter'" name="connectionMoveClearanceAreaCylinderRadiusFromOutermost_checkStock"/>
@@ -1622,7 +1622,7 @@
     <parameter expression="'outer diameter'" name="connectionMoveClearanceAreaCylinderRadiusFromOutermost_checkFixture"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCylinderRadius_offset"/>
     <parameter expression="connectionMoveClearanceAreaCylinderRadius_mode == 'radius' ? connectionMoveClearanceAreaCylinderRadius_value : connectionMoveClearanceAreaCylinderRadius_value * 2" name="connectionMoveClearanceAreaCylinderRadius_direct"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaCylinderRadius_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaCylinderRadius_value"/>
     <parameter expression="'from stock od'" name="connectionMoveClearanceAreaSphereRadius_mode"/>
     <parameter expression="false" name="connectionMoveClearanceAreaSphereRadius_ref"/>
     <parameter expression="'outer diameter'" name="connectionMoveClearanceAreaSphereRadiusFromOutermost_checkStock"/>
@@ -1630,20 +1630,20 @@
     <parameter expression="'outer diameter'" name="connectionMoveClearanceAreaSphereRadiusFromOutermost_checkFixture"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaSphereRadius_offset"/>
     <parameter expression="connectionMoveClearanceAreaSphereRadius_mode == 'radius' ? connectionMoveClearanceAreaSphereRadius_value : connectionMoveClearanceAreaSphereRadius_value * 2" name="connectionMoveClearanceAreaSphereRadius_direct"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaSphereRadius_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaSphereRadius_value"/>
     <parameter expression="'from stock box'" name="connectionMoveClearanceAreaCuboid_mode"/>
     <parameter expression="true" name="connectionMoveClearanceAreaCuboid_symmetricalOffsets"/>
-    <parameter expression="565.33349415165969" name="connectionMoveClearanceAreaCuboidPosX_value"/>
+    <parameter expression="356.42400756835946" name="connectionMoveClearanceAreaCuboidPosX_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidPosX_offset"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaCuboidNegX_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaCuboidNegX_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidNegX_offset"/>
-    <parameter expression="1037.73226026743919" name="connectionMoveClearanceAreaCuboidPosY_value"/>
+    <parameter expression="221.55000000000001" name="connectionMoveClearanceAreaCuboidPosY_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidPosY_offset"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaCuboidNegY_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaCuboidNegY_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidNegY_offset"/>
-    <parameter expression="10.16" name="connectionMoveClearanceAreaCuboidPosZ_value"/>
+    <parameter expression="10." name="connectionMoveClearanceAreaCuboidPosZ_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidPosZ_offset"/>
-    <parameter expression="16.05280000000011" name="connectionMoveClearanceAreaCuboidNegZ_value"/>
+    <parameter expression="14.175" name="connectionMoveClearanceAreaCuboidNegZ_value"/>
     <parameter expression="0.4in" name="connectionMoveClearanceAreaCuboidNegZ_offset"/>
     <parameter expression="true" name="use_tool_stepdown"/>
     <parameter expression="0.1in" name="tool_stepdown"/>
