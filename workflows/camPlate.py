@@ -19,6 +19,73 @@ from .job_status import ensure_completion_response, send_job_error
 from .templateTools import patch_cam_template_with_tool_libraries
 
 
+def _read_time_value(value) -> Optional[float]:
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    for attr in ("value", "valueInSeconds", "seconds"):
+        try:
+            v = getattr(value, attr)
+        except Exception:
+            continue
+        try:
+            return float(v)
+        except Exception:
+            continue
+    return None
+
+
+def _operation_machining_time(operation) -> Optional[float]:
+    if getattr(operation, "isSuppressed", False):
+        return None
+    if hasattr(operation, "isToolpathValid") and not operation.isToolpathValid:
+        return None
+    for attr in ("machiningTime", "cycleTime", "toolpathTime"):
+        if not hasattr(operation, attr):
+            continue
+        try:
+            val = getattr(operation, attr)
+            if callable(val):
+                val = val()
+        except Exception:
+            continue
+        t = _read_time_value(val)
+        if t is not None:
+            return t
+    for attr in ("toolpathStatistics", "toolpathStatistic", "toolpathStats"):
+        if not hasattr(operation, attr):
+            continue
+        try:
+            stats = getattr(operation, attr)
+            if callable(stats):
+                stats = stats()
+        except Exception:
+            continue
+        if stats is None:
+            continue
+        for stat_attr in ("machiningTime", "cycleTime", "totalTime"):
+            if not hasattr(stats, stat_attr):
+                continue
+            t = _read_time_value(getattr(stats, stat_attr))
+            if t is not None:
+                return t
+    return None
+
+
+def _total_machining_time(cam: adsk.cam.CAM) -> Optional[float]:
+    total = 0.0
+    found = False
+    for setup in cam.setups:
+        for operation in setup.operations:
+            t = _operation_machining_time(operation)
+            if t is None:
+                continue
+            total += t
+            found = True
+    return total if found else None
+
+
 def _normalize_assignments(payload: dict) -> list[dict]:
     def normalize_quantity(value) -> int:
         if value is None:
@@ -193,7 +260,7 @@ def _download_machine_post_processor(
 
 
 def _fetch_plate_data(session: requests.Session, plate_id: int) -> Optional[dict]:
-    """Fetch plate data from API and return plate info with length, width, and true_depth."""
+    """Fetch plate data from API and return plate info with length, width, true_depth, and category."""
     try:
         resp = session.get(f"{BASE_URL}/api/plates/{plate_id}", timeout=30)
         resp.raise_for_status()
@@ -279,6 +346,19 @@ def start(data, session):
                     tool_ids = [int(tool_ids_raw)]
                 except Exception:
                     pass
+
+        # Extract tool_items (specific tool GUIDs from within libraries)
+        tool_items_raw = _get(payload, "tool_items")
+        filter_guids = None
+        if isinstance(tool_items_raw, list) and tool_items_raw:
+            filter_guids = set()
+            for item in tool_items_raw:
+                if isinstance(item, dict):
+                    guid = item.get("tool_guid")
+                    if guid:
+                        filter_guids.add(str(guid))
+            if not filter_guids:
+                filter_guids = None
 
         machine_id = _get(payload, "machine_id", "machineId")
 
@@ -482,6 +562,7 @@ def start(data, session):
                     patched_template,
                     tool_library_paths,
                     material_name=material_name,
+                    filter_guids=filter_guids,
                 )
                 if patch_info.get("missing"):
                     app.log(
@@ -493,14 +574,20 @@ def start(data, session):
                     "Failed to patch CAM template:\n{}".format(traceback.format_exc())
                 )
 
-        # Use true_depth from plate data if available, otherwise from payload or default
-        thickness = true_depth if plate_data else float(
-            _get(
-                payload,
-                "thickness",
-                default=_get(payload, "true_depth", "trueDepth", default=0.125),
+        # Use category thickness (nominal part thickness) from plate data for the depth parameter
+        # This allows the offset calculation (true_depth - thickness) to account for
+        # the difference between actual stock thickness and nominal part thickness
+        if plate_data:
+            category = plate_data.get("category", {})
+            thickness = float(category.get("thickness", true_depth))
+        else:
+            thickness = float(
+                _get(
+                    payload,
+                    "thickness",
+                    default=_get(payload, "true_depth", "trueDepth", default=0.125),
+                )
             )
-        )
 
         SetupGenerator(
             machine_name or _get(payload, "machine"),
@@ -510,6 +597,15 @@ def start(data, session):
             template_path=template_path,
         )
         DeleteToolpaths()
+
+        total_machining_time = None
+        try:
+            cam_product = app.activeDocument.products.itemByProductType("CAMProductType")
+            cam = adsk.cam.CAM.cast(cam_product) if cam_product else None
+            if cam:
+                total_machining_time = _total_machining_time(cam)
+        except Exception:
+            app.log("Failed to compute machining time:\n{}".format(traceback.format_exc()))
 
         plate_id = str(_get(payload, "plate_id", "plateId", default="cam_plate"))
         job_id = str(data.get("id", "unknown"))
@@ -562,13 +658,17 @@ def start(data, session):
         zip_path = shutil.make_archive(zip_base, "zip", export_dir)
         shutil.rmtree(export_dir, ignore_errors=True)
 
+        completion_data = {}
+        if total_machining_time is not None:
+            completion_data["total_machining_time"] = total_machining_time
+
         with open(zip_path, "rb") as bundle_file:
             resp = session.post(
                 f"{BASE_URL}/api/jobs/complete",
                 files={
                     "data": (
                         None,
-                        json.dumps({}),
+                        json.dumps(completion_data),
                         "application/json",
                     ),
                     "file": (

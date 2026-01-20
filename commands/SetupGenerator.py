@@ -6,7 +6,9 @@ import os
 from typing import Optional
 
 
-def SetupGenerator(machine, truedepth, material, depth, *, template_path: Optional[str] = None):
+def SetupGenerator(
+    machine, truedepth, material, depth, *, template_path: Optional[str] = None
+):
     app = adsk.core.Application.get()
     ui = app.userInterface
     camWS: adsk.core.Workspace = ui.workspaces.itemById("FusionSolidEnvironment")
@@ -25,7 +27,7 @@ def SetupGenerator(machine, truedepth, material, depth, *, template_path: Option
     setupInput.name = "Setup"
     setup = cam.setups.add(setupInput)
     setup.stockMode = adsk.cam.SetupStockModes.RelativeBoxStock
-    setup.parameters.itemByName("job_stockOffsetMode").expression = "'simple'"
+    setup.parameters.itemByName("job_stockOffsetMode").expression = "'all'"
     setup.parameters.itemByName("job_stockOffsetXBack").expression = ".5 in"
     setup.parameters.itemByName("job_stockOffsetYFront").expression = ".5 in"
     setup.parameters.itemByName("job_stockOffsetZFront").expression = (
@@ -48,13 +50,21 @@ def SetupGenerator(machine, truedepth, material, depth, *, template_path: Option
     else:
         candidates = []
         if machine == "Swift" and material == "AL 6061":
-            candidates.append(os.path.join(baseDir, "../templates/AluminumSwift.f3dhsm-template"))
+            candidates.append(
+                os.path.join(baseDir, "../templates/AluminumSwift.f3dhsm-template")
+            )
         elif machine == "Swift" and material == "Polycarb":
-            candidates.append(os.path.join(baseDir, "../templates/PolycarbSwift.f3dhsm-template"))
+            candidates.append(
+                os.path.join(baseDir, "../templates/PolycarbSwift.f3dhsm-template")
+            )
         elif machine == "IQ" and material == "Polycarb":
-            candidates.append(os.path.join(baseDir, "../templates/PolycarbIQ.f3dhsm-template"))
+            candidates.append(
+                os.path.join(baseDir, "../templates/PolycarbIQ.f3dhsm-template")
+            )
         elif machine == "IQ" and material == "AL 6061":
-            candidates.append(os.path.join(baseDir, "../templates/AluminumIQ.f3dhsm-template"))
+            candidates.append(
+                os.path.join(baseDir, "../templates/AluminumIQ.f3dhsm-template")
+            )
 
         # Fallback to the generic plate template included with this add-in.
         candidates.append(os.path.join(baseDir, "../templates/Plates.f3dhsm-template"))

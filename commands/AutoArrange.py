@@ -20,7 +20,7 @@ def AutoArrange(length, width) -> adsk.fusion.ArrangeFeature:
 
     # Modify some of the arrange settings.
     arrangeDefInput.globalRotation = (
-        adsk.fusion.ArrangeRotationTypes.NoneArrangeRotationType
+        adsk.fusion.ArrangeRotationTypes.AllRotationsArrangeRotationType
     )
     arrangeDefInput.isGlobalDirectionFaceUp = False
     arrangeDefInput.isPartInPartAllowed = True

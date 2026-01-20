@@ -253,10 +253,20 @@ def load_tool_library_json(path: str) -> dict:
     return data
 
 
-def _index_tools(tool_library: dict) -> dict:
+def _index_tools(
+    tool_library: dict,
+    filter_guids: Optional[set[str]] = None,
+) -> dict:
     tools = tool_library.get("data")
     if not isinstance(tools, list):
         tools = []
+
+    # Filter tools by GUID if filter_guids is provided
+    if filter_guids is not None:
+        tools = [
+            tool for tool in tools
+            if isinstance(tool, dict) and tool.get("guid") in filter_guids
+        ]
 
     by_desc: dict[str, dict] = {}
     by_type: dict[str, list[dict]] = {}
@@ -609,6 +619,7 @@ def patch_cam_template_with_tool_libraries(
     tool_library_paths: list[str],
     *,
     material_name: Optional[str] = None,
+    filter_guids: Optional[set[str]] = None,
 ) -> dict:
     if not tool_library_paths:
         raise ValueError("tool_library_paths must not be empty")
@@ -616,7 +627,7 @@ def patch_cam_template_with_tool_libraries(
     indexes: list[dict] = []
     for path in tool_library_paths:
         lib = load_tool_library_json(path)
-        indexes.append(_index_tools(lib))
+        indexes.append(_index_tools(lib, filter_guids=filter_guids))
 
     ET.register_namespace("", _TEMPLATE_NS)
     tree = ET.parse(template_path)

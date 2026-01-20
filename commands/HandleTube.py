@@ -92,7 +92,19 @@ def alignEdgeToYAxis(
     bodyOcc.transform = occTransform
 
 
-def handleTube(template):
+def _normalize_orientation(value):
+    if value is None:
+        return "vertical"
+    try:
+        text = str(value).strip().lower()
+    except Exception:
+        return "vertical"
+    if text == "horizontal":
+        return "horizontal"
+    return "vertical"
+
+
+def handleTube(template, orientation=None):
     app = adsk.core.Application.get()
     ui = app.userInterface
     doc = app.activeDocument
@@ -263,6 +275,8 @@ def handleTube(template):
     Xflip = [True, True, False, False]
     Yflip = [True, True, True, True]
     name = ["Top", "Right", "Bottom", "Left"]
+    orientation_mode = _normalize_orientation(orientation)
+    use_horizontal = orientation_mode == "horizontal"
     tubesTemplateFile = adsk.cam.CAMTemplate.createFromFile(
         os.path.join(os.path.dirname(__file__), template)
     )
@@ -303,13 +317,23 @@ def handleTube(template):
         setup.parameters.itemByName("job_stockOffsetSides").expression = "0 mm"
         setup.parameters.itemByName("job_stockOffsetTop").expression = "0 mm"
         setup.parameters.itemByName("wcs_orientation_mode").value.value = "axesXY"
+        axis_x_edge = good_one if use_horizontal else extreme_edges[0]
+        axis_y_edge = extreme_edges[0] if use_horizontal else good_one
         setup.parameters.itemByName("wcs_orientation_axisX").value.value = [
-            extreme_edges[0]
+            axis_x_edge
         ]
-        setup.parameters.itemByName("wcs_orientation_axisY").value.value = [good_one]
+        setup.parameters.itemByName("wcs_orientation_axisY").value.value = [
+            axis_y_edge
+        ]
         setup.parameters.itemByName("job_model").value.value = [body]
-        setup.parameters.itemByName("wcs_orientation_flipY").value.value = flipY
-        setup.parameters.itemByName("wcs_orientation_flipX").value.value = flipX
+        flip_x_value = True if use_horizontal else flipX
+        flip_y_value = flipX if use_horizontal else flipY
+        setup.parameters.itemByName("wcs_orientation_flipY").value.value = (
+            flip_y_value
+        )
+        setup.parameters.itemByName("wcs_orientation_flipX").value.value = (
+            flip_x_value
+        )
         setup.parameters.itemByName("wcs_origin_boxPoint").value.value = boxPoint
         setup.createFromCAMTemplate2(tubesTemplate)
         for operation in setup.operations:
