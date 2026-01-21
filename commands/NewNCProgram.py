@@ -13,8 +13,26 @@ def get_tool_diameter(toolpath):
     try:
         value = toolpath.tool.parameters.itemByName("tool_diameter").value
         return value.value / 2.54  # Convert from cm to inches
-    except:
+    except Exception:
         return 0
+
+
+def _format_tool_label(toolpath):
+    """Create a filename-friendly label from the tool diameter."""
+    try:
+        value = toolpath.tool.parameters.itemByName("tool_diameter").value.value
+    except Exception:
+        return "0"
+    inches = value / 2.54
+    numbers_only = re.sub(r"[^0-9]", "", str(inches))
+    if not numbers_only:
+        numbers_only = "0"
+    try:
+        formatted = f"{float(numbers_only):3.2f}"
+    except Exception:
+        formatted = numbers_only
+    label = formatted.replace(".", "").strip("0")
+    return label or "0"
 
 
 def export(name, machine):
@@ -61,62 +79,25 @@ def export(name, machine):
             postProcessInput.isOpenInEditor = False
             cam.postProcess(toolpath, postProcessInput)
         for toolpath in releventToolpaths["Pocket"]:
-            value: adsk.cam.CadObjectParameterValue = (
-                toolpath.tool.parameters.itemByName("tool_diameter").value
+            tool = _format_tool_label(toolpath)
+            postProcessInput = adsk.cam.PostProcessInput.create(
+                setup.name[0] + tool + "Pocket",
+                absolutePath,
+                folder_path,
+                adsk.cam.PostOutputUnitOptions.MillimetersOutput,
             )
-            value = value.value / 2.54
-            numbers_only = re.sub(
-                r"[^0-9]",
-                "",
-                str(value),
-            )
-            tool = f"{float(numbers_only):3.2f}".replace(".", "").strip("0")
-            camManager = adsk.cam.CAMManager.get()
-            libraryManager: adsk.cam.CAMLibraryManager = camManager.libraryManager
-            postLibrary: adsk.cam.PostLibrary = libraryManager.postLibrary
-
-            postQuery: adsk.cam.PostConfigurationQuery = postLibrary.createQuery(
-                adsk.cam.LibraryLocations.CloudLibraryLocation
-            )
-            postQuery.capability = adsk.cam.PostCapabilities.Milling
-            postConfigs: list[adsk.cam.PostConfiguration] = postQuery.execute()
-
-            # Find the "XYZ" post in the post library and import it to local library
-            postconfig = [pc for pc in postConfigs if pc.description == "Laguna CNC"][0]
-
-            ncInput: adsk.cam.NCProgramInput = cam.ncPrograms.createInput()
-            ncInput.displayName = setup.name[0] + tool + "Pocket"
-            ncParameters: adsk.cam.CAMParameters = ncInput.parameters
-            ncParameters.itemByName("nc_program_filename").value.value = (
-                setup.name[0] + tool + "Pocket"
-            )
-            ncParameters.itemByName("nc_program_openInEditor").value.value = False
-            ncParameters.itemByName("nc_program_output_folder").value.value = (
-                folder_path
-            )
-            ncInput.operations = [toolpath]
-            newProgram: adsk.cam.NCProgram = cam.ncPrograms.add(ncInput)
-            newProgram.postConfiguration = postconfig
-            postParameters: adsk.cam.CAMParameters = newProgram.postParameters
-            newProgram.updatePostParameters(postParameters)
-            postOptions = adsk.cam.NCProgramPostProcessOptions.create()
+            postProcessInput.isOpenInEditor = False
             try:
-                newProgram.postProcess(postOptions)
-            except:
-                continue
-            app.log(f"Exported")
+                cam.postProcess(toolpath, postProcessInput)
+            except Exception:
+                app.log(
+                    "Failed to post process pocket toolpath:\n{}".format(
+                        traceback.format_exc()
+                    )
+                )
 
         for toolpath in releventToolpaths["Profile"]:
-            value: adsk.cam.CadObjectParameterValue = (
-                toolpath.tool.parameters.itemByName("tool_diameter").value
-            )
-            value = value.value / 2.54
-            numbers_only = re.sub(
-                r"[^0-9]",
-                "",
-                str(value),
-            )
-            tool = f"{float(numbers_only):3.2f}".replace(".", "").strip("0")
+            tool = _format_tool_label(toolpath)
             postProcessInput = adsk.cam.PostProcessInput.create(
                 setup.name[0] + tool + "Profile",
                 absolutePath,
