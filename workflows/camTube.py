@@ -209,10 +209,9 @@ def _download_box_tube_file(
         raise ValueError("Box tube response missing 'file' signed URL")
     app.log(f"Downloading box tube STEP file from URL: {url}")
     out_path = os.path.join(dest_dir, f"{tube_id}.step")
-    if not os.path.exists(out_path):
-        content = requests.get(url, timeout=30).content
-        with open(out_path, "wb") as f:
-            f.write(content)
+    content = requests.get(url, timeout=30).content
+    with open(out_path, "wb") as f:
+        f.write(content)
 
     return out_path
 
