@@ -115,12 +115,12 @@ def handleTube(template_filename: str, orientation: str = None):
         ui.messageBox("No active document.")
         return
 
-    products = doc.products
-    design = adsk.fusion.Design.cast(products.itemByProductType("DesignProductType"))
-    cam = adsk.cam.CAM.cast(products.itemByProductType("CAMProductType"))
     selection = design.rootComponent.occurrences.item(0)
     camWS = ui.workspaces.itemById("CAMEnvironment")
     camWS.activate()
+    products = doc.products
+    design = adsk.fusion.Design.cast(products.itemByProductType("DesignProductType"))
+    cam = adsk.cam.CAM.cast(products.itemByProductType("CAMProductType"))
     
 
     root = design.rootComponent
