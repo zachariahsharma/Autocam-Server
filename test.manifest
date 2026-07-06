@@ -3,9 +3,9 @@
 	"type":	"addin",
 	"author":	"Zachariah Sharma",
 	"description":	{
-		"":	""
+		"":	"AutoCAM Fusion 360 add-in for processing CAM jobs from AutoCAM WebUI."
 	},
-	"version":	"",
+	"version":	"0.1.0",
 	"runOnStartup":	false,
 	"supportedOS":	"windows|mac",
 	"editEnabled":	true,
