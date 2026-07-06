@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="AddInIcon.svg" alt="AutoCAM V2" width="128" />
+<img src="docs/branding/autocam-server-banner.png" alt="AutoCAM Server — the toolpath & job server for manufacturing" width="100%" />
 
-# AutoCAM V2 · Fusion 360 Add-in
+<br />
 
-**The runner that turns AutoCAM job queues into real Fusion 360 CAM setups and G-code.**
+**The Fusion 360 runner that turns AutoCAM job queues into real CAM setups and G-code.**
 
 🌐 Pairs with [cam.valor6800.com](https://cam.valor6800.com) · 🔗 [AutoCAM WebUI repo](https://github.com/zachariahsharma/AutoCAM)
 
