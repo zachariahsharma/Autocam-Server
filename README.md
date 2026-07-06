@@ -64,6 +64,8 @@ The add-in runs a background polling thread that claims jobs from the queue, dis
 - Network access to an **AutoCAM WebUI** deployment
 - An **AutoCAM API key** with runner permissions
 
+> **Before you start:** stand up the [AutoCAM WebUI](https://github.com/zachariahsharma/AutoCAM#-getting-started) (or use the hosted app at [cam.valor6800.com](https://cam.valor6800.com)), create a team, and generate a **runner API key** with `jobs` scopes. You'll paste that key and the WebUI's `BASE_URL` into this add-in's `.env` below.
+
 ## 🚀 Installation
 
 Place this folder in Fusion 360's add-in directory:
