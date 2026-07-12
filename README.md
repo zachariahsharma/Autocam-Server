@@ -6,7 +6,7 @@
 
 **The Fusion 360 runner that turns AutoCAM job queues into real CAM setups and G-code.**
 
-🌐 Pairs with [cam.valor6800.com](https://cam.valor6800.com) · 🔗 [AutoCAM WebUI repo](https://github.com/zachariahsharma/AutoCAM)
+🌐 Pairs with [cam.valor6800.com](https://cam.valor6800.com) · 🔗 [AutoCAM WebUI repo](https://github.com/AutoCAM-FRC/AutoCAM)
 
 <br />
 
@@ -32,7 +32,7 @@
 
 ## Overview
 
-**Runner** is an Autodesk Fusion 360 add-in that acts as the CAM runner for the [AutoCAM WebUI](https://github.com/zachariahsharma/AutoCAM) platform. It polls the WebUI job queue, pulls down plate and tube jobs, builds Fusion CAM setups from templates, generates toolpaths, exports G-code, and reports completion back to the server.
+**Runner** is an Autodesk Fusion 360 add-in that acts as the CAM runner for the [AutoCAM WebUI](https://github.com/AutoCAM-FRC/AutoCAM) platform. It polls the WebUI job queue, pulls down plate and tube jobs, builds Fusion CAM setups from templates, generates toolpaths, exports G-code, and reports completion back to the server.
 
 Runners authenticate with a scoped **AutoCAM API key**, so a shop can point one or more Fusion machines at a single WebUI deployment and let jobs flow automatically from the browser to the machine.
 
@@ -64,7 +64,7 @@ The add-in runs a background polling thread that claims jobs from the queue, dis
 - Network access to an **AutoCAM WebUI** deployment
 - An **AutoCAM API key** with runner permissions
 
-> **Before you start:** stand up the [AutoCAM WebUI](https://github.com/zachariahsharma/AutoCAM#-getting-started) (or use the hosted app at [cam.valor6800.com](https://cam.valor6800.com)), create a team, and generate a **runner API key** with `jobs` scopes. You'll paste that key and the WebUI's `BASE_URL` into this add-in's `.env` below.
+> **Before you start:** stand up the [AutoCAM WebUI](https://github.com/AutoCAM-FRC/AutoCAM#-getting-started) (or use the hosted app at [cam.valor6800.com](https://cam.valor6800.com)), create a team, and generate a **runner API key** with `jobs` scopes. You'll paste that key and the WebUI's `BASE_URL` into this add-in's `.env` below.
 
 ## 🚀 Installation
 
@@ -144,7 +144,7 @@ See **[CONTRIBUTING.md](CONTRIBUTING.md)** for the full pull-request checklist.
 
 ## 🔗 Related
 
-- **[AutoCAM WebUI](https://github.com/zachariahsharma/AutoCAM)** — the multi-tenant web platform this add-in runs jobs for
+- **[AutoCAM WebUI](https://github.com/AutoCAM-FRC/AutoCAM)** — the multi-tenant web platform this add-in runs jobs for
 - **Live app:** [cam.valor6800.com](https://cam.valor6800.com)
 
 ## 🛡️ Security
