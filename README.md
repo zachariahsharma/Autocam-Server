@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/branding/autocam-server-banner.png" alt="AutoCAM Server — the toolpath & job server for manufacturing" width="100%" />
+<img src="docs/branding/autocam-runner-banner.png" alt="AutoCAM Runner — the toolpath and job server for manufacturing" width="100%" />
 
 <br />
 
@@ -10,11 +10,11 @@
 
 <br />
 
-[![License: MIT](https://img.shields.io/github/license/zachariahsharma/Autocam-Server?color=E6DD5E&labelColor=0d1117)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/zachariahsharma/Autocam-Server?color=E6DD5E&labelColor=0d1117&logo=github)](https://github.com/zachariahsharma/Autocam-Server/stargazers)
-[![Forks](https://img.shields.io/github/forks/zachariahsharma/Autocam-Server?color=E6DD5E&labelColor=0d1117&logo=github)](https://github.com/zachariahsharma/Autocam-Server/network/members)
-[![Issues](https://img.shields.io/github/issues/zachariahsharma/Autocam-Server?color=E6DD5E&labelColor=0d1117)](https://github.com/zachariahsharma/Autocam-Server/issues)
-[![Last Commit](https://img.shields.io/github/last-commit/zachariahsharma/Autocam-Server?color=E6DD5E&labelColor=0d1117)](https://github.com/zachariahsharma/Autocam-Server/commits)
+[![License: MIT](https://img.shields.io/github/license/AutoCAM-FRC/Runner?color=E6DD5E&labelColor=0d1117)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/AutoCAM-FRC/Runner?color=E6DD5E&labelColor=0d1117&logo=github)](https://github.com/AutoCAM-FRC/Runner/stargazers)
+[![Forks](https://img.shields.io/github/forks/AutoCAM-FRC/Runner?color=E6DD5E&labelColor=0d1117&logo=github)](https://github.com/AutoCAM-FRC/Runner/network/members)
+[![Issues](https://img.shields.io/github/issues/AutoCAM-FRC/Runner?color=E6DD5E&labelColor=0d1117)](https://github.com/AutoCAM-FRC/Runner/issues)
+[![Last Commit](https://img.shields.io/github/last-commit/AutoCAM-FRC/Runner?color=E6DD5E&labelColor=0d1117)](https://github.com/AutoCAM-FRC/Runner/commits)
 
 <br />
 
@@ -32,7 +32,7 @@
 
 ## Overview
 
-**AutoCAM V2** is an Autodesk Fusion 360 add-in that acts as the CAM **runner** for the [AutoCAM WebUI](https://github.com/zachariahsharma/AutoCAM) platform. It polls the WebUI job queue, pulls down plate and tube jobs, builds Fusion CAM setups from templates, generates toolpaths, exports G-code, and reports completion back to the server.
+**Runner** is an Autodesk Fusion 360 add-in that acts as the CAM runner for the [AutoCAM WebUI](https://github.com/zachariahsharma/AutoCAM) platform. It polls the WebUI job queue, pulls down plate and tube jobs, builds Fusion CAM setups from templates, generates toolpaths, exports G-code, and reports completion back to the server.
 
 Runners authenticate with a scoped **AutoCAM API key**, so a shop can point one or more Fusion machines at a single WebUI deployment and let jobs flow automatically from the browser to the machine.
 
